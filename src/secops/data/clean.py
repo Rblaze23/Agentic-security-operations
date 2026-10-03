@@ -27,6 +27,7 @@ class CleaningReport:
     attempted_policy: str
     duplicates_removed: int
     duplicates_removed_by_label: dict[str, int] = field(default_factory=dict)
+    inf_cells_by_day: dict[str, int] = field(default_factory=dict)
     label_counts_in: dict[str, int] = field(default_factory=dict)
     label_counts_out: dict[str, int] = field(default_factory=dict)
     family_counts_out: dict[str, int] = field(default_factory=dict)
@@ -58,7 +59,11 @@ def clean(df: pd.DataFrame, policy: AttemptedPolicy) -> tuple[pd.DataFrame, Clea
     feats = out[s.FEATURE_COLS].to_numpy(dtype=np.float32)
     inf_mask = np.isinf(feats)
     inf_cells = int(inf_mask.sum())
+    inf_by_day: dict[str, int] = {}
     if inf_cells:
+        per_row = pd.Series(inf_mask.sum(axis=1), index=out.index)
+        by_day = per_row.groupby(out["day"].astype(str), observed=True).sum()
+        inf_by_day = {str(k): int(v) for k, v in by_day.items() if v > 0}
         out[s.FEATURE_COLS] = np.where(inf_mask, np.nan, feats).astype(np.float32)
 
     dup_mask = out.duplicated(subset=[*s.FEATURE_COLS, "label"], keep="first")
@@ -78,6 +83,7 @@ def clean(df: pd.DataFrame, policy: AttemptedPolicy) -> tuple[pd.DataFrame, Clea
         attempted_policy=str(policy),
         duplicates_removed=int(dup_mask.sum()),
         duplicates_removed_by_label=dup_by_label,
+        inf_cells_by_day=inf_by_day,
         label_counts_in=label_counts_in,
         label_counts_out=_counts(out["label"]),
         family_counts_out=_counts(out["family"]),

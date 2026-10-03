@@ -14,7 +14,10 @@ from secops.detection.registry import CHAMPION_ALIAS, load_model, promote
 def tracking(tmp_path: Path) -> str:
     uri = f"sqlite:///{tmp_path / 'mlflow.db'}"
     mlflow.set_tracking_uri(uri)
-    mlflow.set_experiment("test/registry")
+    exp_id = mlflow.create_experiment(
+        "test/registry", artifact_location=str(tmp_path / "artifacts")
+    )
+    mlflow.set_experiment(experiment_id=exp_id)
     return uri
 
 
@@ -56,3 +59,41 @@ def test_promote_second_run_moves_alias(tracking: str, tmp_path: Path) -> None:
     promote(r1, "test-detector-2")
     assert promote(r2, "test-detector-2") == 2
     assert load_model("test-detector-2").run_id == r2
+
+
+def test_load_model_raises_on_artifact_store_error(
+    tracking: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_id = _fake_run(tmp_path / "c")
+    promote(run_id, "test-detector-3")
+    import secops.detection.registry as reg
+
+    def boom(*_a: object, **_k: object) -> str:
+        raise OSError("artifact store unreachable")
+
+    monkeypatch.setattr(reg.mlflow.artifacts, "load_text", boom)
+    with pytest.raises(OSError):
+        load_model("test-detector-3")
+
+
+def test_load_model_reads_classes_json(tracking: str, tmp_path: Path) -> None:
+    workdir = tmp_path / "d"
+    workdir.mkdir()
+    X = np.random.default_rng(0).normal(size=(60, 82)).astype(np.float32)
+    y = np.repeat([0, 1, 2], 20)
+    clf = LogisticRegression().fit(X, y)
+    with mlflow.start_run() as run:
+        FEATURE_SPEC_V1.save(workdir / "feature_spec.json")
+        (workdir / "classes.json").write_text(json.dumps(["zeta", "alpha", "mid"]))
+        mlflow.log_artifact(str(workdir / "feature_spec.json"))
+        mlflow.log_artifact(str(workdir / "classes.json"))
+        mlflow.sklearn.log_model(
+            clf,
+            name="model",
+            pyfunc_predict_fn="predict_proba",
+            serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
+        )
+    promote(str(run.info.run_id), "test-family")
+    loaded = load_model("test-family")
+    assert loaded.classes == ["zeta", "alpha", "mid"]  # training order, not sorted
+    assert loaded.threshold is None

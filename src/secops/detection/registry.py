@@ -48,11 +48,16 @@ def promote(run_id: str, model_name: str, alias: str = CHAMPION_ALIAS) -> int:
     return int(mv.version)
 
 
-def _artifact_json(run_id: str, name: str) -> dict[str, Any] | None:
-    try:
-        return dict(json.loads(mlflow.artifacts.load_text(f"runs:/{run_id}/{name}")))
-    except Exception:  # noqa: BLE001  artifact absent for this task type
+def _artifact_json(run_id: str, name: str) -> Any:
+    """Parsed JSON artifact, or None only when the run genuinely has no artifact of that name.
+
+    Any other failure (unreachable artifact store, permissions, corrupt file) propagates:
+    a detector loaded without its threshold must not start silently.
+    """
+    names = {a.path for a in mlflow.artifacts.list_artifacts(run_id=run_id)}
+    if name not in names:
         return None
+    return json.loads(mlflow.artifacts.load_text(f"runs:/{run_id}/{name}"))
 
 
 def load_model(model_name: str, alias: str = CHAMPION_ALIAS) -> LoadedModel:
@@ -64,12 +69,12 @@ def load_model(model_name: str, alias: str = CHAMPION_ALIAS) -> LoadedModel:
     if spec_json is None:
         raise ValueError(f"run {run_id} has no feature_spec.json artifact")
     thr = _artifact_json(run_id, "threshold.json")
-    per_class = _artifact_json(run_id, "per_class_metrics.json")
+    classes = _artifact_json(run_id, "classes.json")
     return LoadedModel(
         model=_ProbaAdapter(pyfunc),
         feature_spec=FeatureSpec.model_validate(spec_json),
         threshold=float(thr["threshold"]) if thr else None,
-        classes=sorted(per_class["per_class"]) if per_class else None,
+        classes=[str(c) for c in classes] if classes else None,
         model_name=model_name,
         version=int(mv.version),
         run_id=run_id,

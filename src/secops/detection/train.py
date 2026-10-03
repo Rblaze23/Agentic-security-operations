@@ -14,7 +14,7 @@ import mlflow
 import numpy as np
 import pandas as pd
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from secops.config import Settings
 from secops.data import schema as s
@@ -51,6 +51,8 @@ BACKGROUND_ROWS = 1000
 
 
 class TrainConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     experiment: str
     run_name: str
     task: Task
@@ -72,6 +74,19 @@ class TrainConfig(BaseModel):
         for k, v in (overrides or {}).items():
             data[k] = None if v == "" else v
         return cls.model_validate(data)
+
+
+SWEEP_THRESHOLDS: tuple[float, ...] = (0.001, 0.01, 0.05, 0.1, 0.25, 0.5)
+
+
+def ensure_experiment(name: str, settings: Settings) -> str:
+    """Create the experiment with its artifact root under the data directory, never <cwd>/mlruns."""
+    exp = mlflow.get_experiment_by_name(name)
+    if exp is not None:
+        return str(exp.experiment_id)
+    location = settings.mlflow_dir / "artifacts" / name
+    location.mkdir(parents=True, exist_ok=True)
+    return str(mlflow.create_experiment(name, artifact_location=str(location)))
 
 
 def load_parts(
@@ -160,6 +175,25 @@ def _binary_stage(
     labels = parts["test"]["label"].astype(str).to_numpy()
     per_label = per_group_recall(y["test"], p_test, t, labels)
     pd.Series(per_label, name="recall").rename_axis("label").to_csv(out / "per_label_recall.csv")
+    sweep = {
+        str(thr): {
+            **binary_metrics(y["test"], p_test, thr).to_dict(),
+            "per_label_recall": per_group_recall(y["test"], p_test, thr, labels),
+        }
+        for thr in (t, *SWEEP_THRESHOLDS)
+    }
+    (out / "threshold_sweep.json").write_text(json.dumps(sweep, indent=2))
+    fp_mask = (y["test"] == 0) & (p_test >= t)
+    fp_rows = parts["test"].loc[fp_mask]
+    breakdown = {
+        "threshold": t,
+        "false_positives": int(fp_mask.sum()),
+        "by_day": {str(k): int(v) for k, v in fp_rows["day"].astype(str).value_counts().items()},
+        "by_label_raw": {
+            str(k): int(v) for k, v in fp_rows["label_raw"].astype(str).value_counts().items()
+        },
+    }
+    (out / "fp_breakdown.json").write_text(json.dumps(breakdown, indent=2))
     save_figure(pr_curve_figure(y["test"], p_test, t), out / "pr_curve.png")
     cm = [
         [int(metrics["test_tn"]), int(metrics["test_fp"])],
@@ -190,6 +224,7 @@ def _multiclass_stage(
             metrics[f"{part}_support_{c_name}"] = d["support"]
         if part == "test":
             (out / "per_class_metrics.json").write_text(json.dumps(mm, indent=2))
+            (out / "classes.json").write_text(json.dumps(list(classes)))
             fig = confusion_matrix_figure(mm["confusion"], classes)
             save_figure(fig, out / "confusion_matrix.png")
     return metrics
@@ -213,7 +248,7 @@ def _explain_stage(
 
 def run_training(cfg: TrainConfig, settings: Settings) -> str:
     mlflow.set_tracking_uri(settings.resolved_tracking_uri())
-    mlflow.set_experiment(cfg.experiment)
+    mlflow.set_experiment(experiment_id=ensure_experiment(cfg.experiment, settings))
     spec = FEATURE_SPECS[cfg.feature_spec]
     parts = load_parts(
         settings.processed_dir, cfg.attempted_policy, SPLIT_COLUMN[cfg.split_strategy]

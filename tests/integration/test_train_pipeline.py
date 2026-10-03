@@ -57,11 +57,15 @@ def test_binary_training_logs_metrics_and_artifacts(built_settings: Settings) ->
         "pr_curve.png",
         "confusion_matrix.png",
         "per_label_recall.csv",
+        "threshold_sweep.json",
+        "fp_breakdown.json",
         "shap_global_importance.csv",
         "shap_summary.png",
         "explainer_background.parquet",
     ):
         assert a in arts, a
+    # artifacts must live under the data directory, never in <cwd>/mlruns
+    assert run.info.artifact_uri.startswith(str(built_settings.mlflow_dir)), run.info.artifact_uri
     # MLflow 3 stores the model as a LoggedModel, not a run artifact; the runs:/ URI must
     # still resolve and expose class probabilities (the contract Phase 2 depends on).
     loaded = mlflow.pyfunc.load_model(f"runs:/{run_id}/model")
@@ -90,7 +94,9 @@ def test_family_training_logs_per_class(built_settings: Settings) -> None:
     assert any(k.startswith("test_recall_") for k in run.data.metrics)
     arts = _artifact_paths(run_id)
     assert "per_class_metrics.json" in arts and "confusion_matrix.png" in arts
+    assert "classes.json" in arts
     assert "threshold.json" not in arts
+    assert run.info.artifact_uri.startswith(str(built_settings.mlflow_dir))
 
 
 def test_logreg_training_runs(built_settings: Settings) -> None:

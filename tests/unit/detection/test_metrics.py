@@ -92,3 +92,17 @@ def test_max_f1_threshold_matches_brute_force_and_scales() -> None:
     c = max_f1_threshold(y_big, p_big)
     assert time.perf_counter() - start < 5.0, "max_f1_threshold must be O(n log n), not O(n^2)"
     assert 0 < c.threshold <= 1
+
+
+def test_select_threshold_handles_tied_scores_without_losing_recall() -> None:
+    """Tree models emit tied scores. Six positives and six negatives share scores 0.9..0.4
+    pairwise (a diagonal ROC run); 20 more negatives score 0.1. With FPR budget 0.12
+    (3 of 26 negatives) the best feasible point is threshold 0.7: 3 TP of 6 = recall 0.5.
+    sklearn's roc_curve drops the intermediate diagonal points by default, which would
+    leave only threshold 0.9 (recall 1/6) under budget."""
+    y_t = np.array([1] * 6 + [0] * 6 + [0] * 20)
+    p_t = np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4] * 2 + [0.1] * 20)
+    c = select_threshold(y_t, p_t, max_fpr=0.12)
+    assert c.threshold == pytest.approx(0.7)
+    assert c.recall == pytest.approx(0.5)
+    assert binary_metrics(y_t, p_t, c.threshold).fpr <= 0.12

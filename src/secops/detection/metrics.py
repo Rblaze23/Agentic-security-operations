@@ -89,10 +89,10 @@ def select_threshold(
     """Highest recall whose FPR <= max_fpr; ties -> higher threshold; fallback if none."""
     y = np.asarray(y_true).astype(int)
     p = np.asarray(y_prob, dtype=float)
-    fpr, tpr, thr = roc_curve(y, p)
-    ok = fpr <= max_fpr
-    if not ok.any():
-        return _strictest(p)
+    # drop_intermediate=False: tied scores produce diagonal ROC runs whose interior points
+    # sklearn would otherwise discard, and one of them can be the best point under budget.
+    fpr, tpr, thr = roc_curve(y, p, drop_intermediate=False)
+    ok = fpr <= max_fpr  # the +inf point always qualifies; the recall==0 guard below handles it
     best_tpr = tpr[ok].max()
     cands = np.where(ok & (tpr == best_tpr))[0]
     i = cands[np.argmax(thr[cands])]

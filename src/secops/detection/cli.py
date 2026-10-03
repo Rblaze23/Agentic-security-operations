@@ -12,6 +12,7 @@ import typer
 
 from secops.config import get_settings
 from secops.detection.registry import promote
+from secops.detection.selection import choose_champion
 from secops.detection.train import TrainConfig, run_training
 
 app = typer.Typer(help="Train and report detection models.")
@@ -82,14 +83,21 @@ def report(
 
 
 @app.command(name="promote-best")
-def promote_best(experiment: str, model_name: str, metric: str = "val_pr_auc") -> None:
-    """Register the run with the highest validation metric and point the champion alias at it."""
+def promote_best(
+    experiment: Annotated[str, typer.Option("--experiment", help="MLflow experiment name")],
+    model_name: Annotated[str, typer.Option("--model-name", help="registered model name")],
+    metric: Annotated[str, typer.Option("--metric")] = "val_pr_auc",
+    tie_band: Annotated[float, typer.Option("--tie-band")] = 0.0005,
+) -> None:
+    """Promote the champion by the documented rule and point the champion alias at it."""
     mlflow.set_tracking_uri(get_settings().resolved_tracking_uri())
     df = mlflow.search_runs(experiment_names=[experiment])
-    col = f"metrics.{metric}"
-    if df.empty or col not in df:
+    if df.empty or f"metrics.{metric}" not in df:
         typer.echo(f"no runs with {metric} in {experiment}")
         raise typer.Exit(code=1)
-    best = df.sort_values(col, ascending=False).iloc[0]
-    version = promote(str(best["run_id"]), model_name)
-    typer.echo(f"{model_name} v{version} <- run {best['run_id']} ({metric}={best[col]:.4f})")
+    choice = choose_champion(df, metric, tie_band=tie_band)
+    version = promote(choice.run_id, model_name)
+    typer.echo(
+        f"{model_name} v{version} <- {choice.run_name} ({choice.run_id}) "
+        f"{metric}={choice.metric_value:.6f}; {choice.reason}"
+    )

@@ -32,3 +32,19 @@ def test_top_k_contributions_sorted_by_magnitude() -> None:
     mags = [abs(c.shap_value) for c in top]
     assert mags == sorted(mags, reverse=True)
     assert top[0].feature in {"f0", "f3"}
+
+
+def test_multiclass_global_importance_averages_over_classes() -> None:
+    import shap
+
+    ym = np.digitize(X[:, 0], [-0.5, 0.5])
+    m = build_model("lightgbm", "multiclass", {"n_estimators": 30}, seed=0, n_classes=3)
+    m = fit_model(m, X, ym, X[:50], ym[:50], weighting="none", name="lightgbm")
+    ex = make_explainer(m, "lightgbm", X[:100])
+    imp = global_importance(ex, X[:100], names)
+    raw = np.asarray(shap.TreeExplainer(m).shap_values(X[:100]))
+    if raw.ndim == 3 and raw.shape[0] == 3:  # (classes, n, features) layout
+        raw = np.moveaxis(raw, 0, -1)
+    expected = np.abs(raw).mean(axis=(0, 2))  # mean over rows and classes
+    got = imp.set_index("feature").loc[names, "mean_abs_shap"].to_numpy()
+    assert np.allclose(got, expected)

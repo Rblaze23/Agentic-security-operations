@@ -64,3 +64,14 @@ def test_report_round_trips_to_json(fixture_dir: Path, tmp_path: Path) -> None:
     loaded = json.loads(p.read_text())
     assert loaded["attempted_policy"] == "relabel_benign"
     assert loaded["rows_out"] == rep.rows_out
+
+
+def test_report_counts_inf_cells_by_day(fixture_dir: Path) -> None:
+    df = _df(fixture_dir)
+    monday = df.index[df["day"] == "monday"][:2]
+    friday = df.index[df["day"] == "friday"][:1]
+    df.loc[monday, "Flow Bytes/s"] = np.float32("inf")
+    df.loc[friday, "Flow Packets/s"] = np.float32("-inf")
+    _, rep = clean(df, AttemptedPolicy.RELABEL_BENIGN)
+    assert rep.inf_cells_replaced == 3
+    assert rep.inf_cells_by_day == {"monday": 2, "friday": 1}
