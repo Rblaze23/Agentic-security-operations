@@ -1,0 +1,10 @@
+experiment: secops/detection-binary
+run_name: lightgbm_balanced
+task: binary
+model: lightgbm
+weighting: balanced
+feature_spec: v1-noport
+split_strategy: chrono_within_group
+attempted_policy: relabel_benign
+max_fpr: 0.01
+shap_sample: 20000
