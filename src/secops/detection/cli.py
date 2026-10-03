@@ -11,6 +11,7 @@ import pandas as pd
 import typer
 
 from secops.config import get_settings
+from secops.detection.registry import promote
 from secops.detection.train import TrainConfig, run_training
 
 app = typer.Typer(help="Train and report detection models.")
@@ -44,7 +45,7 @@ def _parse_overrides(items: list[str]) -> dict[str, Any]:
 
 @app.command()
 def run(
-    config: Path,
+    config: Annotated[Path, typer.Option("--config", help="YAML training config")],
     set_: Annotated[
         list[str], typer.Option("--set", help="key=value overrides of the YAML config")
     ] = [],  # noqa: B006
@@ -56,7 +57,9 @@ def run(
 
 
 @app.command()
-def report(experiment: str) -> None:
+def report(
+    experiment: Annotated[str, typer.Option("--experiment", help="MLflow experiment name")],
+) -> None:
     """Print a markdown table of all runs in an experiment (numbers come only from MLflow)."""
     mlflow.set_tracking_uri(get_settings().resolved_tracking_uri())
     df = mlflow.search_runs(experiment_names=[experiment])
@@ -76,3 +79,17 @@ def report(experiment: str) -> None:
             row[c] = f"{v:.4f}" if isinstance(v, float) and pd.notna(v) else ""
         rows.append(row)
     typer.echo(pd.DataFrame(rows, columns=[*REPORT_COLS, "run_id"]).to_markdown(index=False))
+
+
+@app.command(name="promote-best")
+def promote_best(experiment: str, model_name: str, metric: str = "val_pr_auc") -> None:
+    """Register the run with the highest validation metric and point the champion alias at it."""
+    mlflow.set_tracking_uri(get_settings().resolved_tracking_uri())
+    df = mlflow.search_runs(experiment_names=[experiment])
+    col = f"metrics.{metric}"
+    if df.empty or col not in df:
+        typer.echo(f"no runs with {metric} in {experiment}")
+        raise typer.Exit(code=1)
+    best = df.sort_values(col, ascending=False).iloc[0]
+    version = promote(str(best["run_id"]), model_name)
+    typer.echo(f"{model_name} v{version} <- run {best['run_id']} ({metric}={best[col]:.4f})")

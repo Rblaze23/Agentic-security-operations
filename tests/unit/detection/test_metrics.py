@@ -73,3 +73,22 @@ def test_per_group_recall() -> None:
     r = per_group_recall(Y, P, 0.5, groups)
     assert r["x"] == pytest.approx(1.0)  # positives in x: idx 4, 5 -> both >= 0.5
     assert r["y"] == pytest.approx(0.5)  # positives in y: idx 6 (0.4), 7 (0.7)
+
+
+def test_max_f1_threshold_matches_brute_force_and_scales() -> None:
+    import time
+
+    rng = np.random.default_rng(1)
+    y_small = rng.integers(0, 2, size=400)
+    p_small = np.clip(rng.normal(0.5 + 0.3 * y_small, 0.25), 0, 1)
+    grid = np.unique(p_small)
+    f1s = [binary_metrics(y_small, p_small, t).f1 for t in grid]
+    brute = float(grid[int(np.argmax(f1s))])
+    assert max_f1_threshold(y_small, p_small).threshold == pytest.approx(brute)
+
+    y_big = rng.integers(0, 2, size=200_000)
+    p_big = np.clip(rng.normal(0.5 + 0.3 * y_big, 0.25), 0, 1)
+    start = time.perf_counter()
+    c = max_f1_threshold(y_big, p_big)
+    assert time.perf_counter() - start < 5.0, "max_f1_threshold must be O(n log n), not O(n^2)"
+    assert 0 < c.threshold <= 1

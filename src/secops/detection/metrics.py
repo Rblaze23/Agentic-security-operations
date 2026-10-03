@@ -13,6 +13,7 @@ from sklearn.metrics import (
     confusion_matrix,
     f1_score,
     log_loss,
+    precision_recall_curve,
     precision_recall_fscore_support,
     roc_auc_score,
     roc_curve,
@@ -103,11 +104,15 @@ def select_threshold(
 
 
 def max_f1_threshold(y_true: ArrayLike, y_prob: ArrayLike) -> ThresholdChoice:
+    """Threshold maximising F1, computed along the precision-recall curve (O(n log n))."""
     y = np.asarray(y_true).astype(int)
     p = np.asarray(y_prob, dtype=float)
-    grid = np.unique(p)
-    scores = [f1_score(y, (p >= t).astype(int), zero_division=0) for t in grid]
-    t = float(grid[int(np.argmax(scores))])
+    precision, recall, thresholds = precision_recall_curve(y, p)
+    # The last (precision, recall) point has no threshold; drop it.
+    precision, recall = precision[:-1], recall[:-1]
+    denom = precision + recall
+    f1 = np.where(denom > 0, 2 * precision * recall / np.where(denom > 0, denom, 1), 0.0)
+    t = float(thresholds[int(np.argmax(f1))])
     m = binary_metrics(y, p, t)
     return ThresholdChoice(t, m.fpr, m.recall, "max_f1")
 

@@ -6,6 +6,7 @@ import json
 import logging
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -248,19 +249,27 @@ def run_training(cfg: TrainConfig, settings: Settings) -> str:
         model = build_model(
             cfg.model, cfg.task, cfg.params, cfg.seed, n_classes=len(classes) if classes else None
         )
+        t0 = time.perf_counter()
         model = fit_model(
             model, X["train"], y_fit["train"], X["val"], y_fit["val"], cfg.weighting, cfg.model
         )
+        fit_seconds = time.perf_counter() - t0
 
+        t0 = time.perf_counter()
         if classes is None:
             metrics = _binary_stage(cfg, model, X, y, parts, out)
         else:
             metrics = _multiclass_stage(model, X, y, classes, out)
+        metrics["fit_seconds"] = fit_seconds
+        metrics["eval_seconds"] = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        _explain_stage(cfg, model, X["val"], spec, out)
+        metrics["explain_seconds"] = time.perf_counter() - t0
 
         mlflow.log_metrics({k: float(v) for k, v in metrics.items() if np.isfinite(float(v))})
         (out / "metrics.json").write_text(json.dumps(metrics, indent=2, default=float))
         spec.save(out / "feature_spec.json")
-        _explain_stage(cfg, model, X["val"], spec, out)
 
         mlflow.log_artifacts(str(out))
         _log_model(model, X["val"][:100])
