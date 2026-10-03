@@ -104,7 +104,8 @@ def fit_model(
             X_train,
             y_train,
             sample_weight=sw,
-            eval_set=[(X_val, y_val)],
+            eval_X=X_val,
+            eval_y=y_val,
             eval_metric=metric,
             callbacks=[early_stopping(EARLY_STOPPING_ROUNDS, verbose=False), log_evaluation(0)],
         )
