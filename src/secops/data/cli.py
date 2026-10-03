@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import typer
 
-from secops.config import get_settings
+from secops.config import Settings, get_settings
 from secops.data import manifest as m
+from secops.data.build import build as build_pipeline
+from secops.data.clean import AttemptedPolicy
 
 app = typer.Typer(help="Dataset acquisition and preprocessing.")
 
@@ -37,3 +40,18 @@ def verify(data_dir: Path | None = None) -> None:
     raw = (data_dir or get_settings().data_dir) / "raw"
     _report_problems(m.verify_raw_dir(raw))
     typer.echo("all files verified")
+
+
+@app.command()
+def build(
+    attempted_policy: AttemptedPolicy = AttemptedPolicy.RELABEL_BENIGN,
+    data_dir: Path | None = None,
+    subdir: str = "improved",
+) -> None:
+    """Clean, split and write processed/<policy>/flows.parquet with reports."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    st = get_settings() if data_dir is None else Settings(data_dir=data_dir)
+    out = build_pipeline(
+        st.raw_dir, st.processed_dir, st.reports_dir, attempted_policy, subdir=subdir
+    )
+    typer.echo(f"built {out}")
