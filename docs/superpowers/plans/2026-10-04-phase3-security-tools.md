@@ -66,13 +66,13 @@ Connection: `SECOPS_DATABASE_URL` (default `sqlite:///$SECOPS_DATA_DIR/events.db
 
 ```python
 class ToolSpec(BaseModel):
-    name: str                      # snake_case, stable; the agent calls tools by this name
-    description: str               # one paragraph the LLM sees
+    name: str  # snake_case, stable; the agent calls tools by this name
+    description: str  # one paragraph the LLM sees
     input_model: type[BaseModel]
     output_model: type[BaseModel]
     run: Callable[[BaseModel], BaseModel]
     read_only: Literal[True] = True
-    external_source: str | None    # "nvd" | "mitre-attack" | None (local)
+    external_source: str | None  # "nvd" | "mitre-attack" | None (local)
 ```
 
 Rules: inputs validated by Pydantic with `extra="forbid"`; every list output capped; every output carries `source` (where the data came from) and, when text is included from an external source, `untrusted_text: True`. Tools never raise for "no result": they return a typed status. Tools raise only for programming errors (which the agent layer converts to `tool_error` evidence in Phase 4).

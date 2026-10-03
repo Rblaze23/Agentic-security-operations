@@ -129,3 +129,49 @@ By mean |SHAP| on 20,000 validation flows: Bwd Packet Length Std dominates (2.69
 Length Std (0.67), Bwd Init Win Bytes (0.61), Bwd Packet Length Mean (0.57), Total Length of Bwd
 Packet (0.28). The response-side packet statistics carry the signal: DoS tools and brute-force
 tools elicit very regular replies.
+
+## Phase 3 — Security tools
+
+**Why does the agent need tools at all, given a 0.9999 PR-AUC detector?**
+Because the held-out experiment showed the score does not transfer: 6% recall on unseen botnet
+traffic. A flow score is one signal. The tools answer the questions an analyst asks next, each from
+a real source the agent can cite: how many flows did this source produce in the last minutes and
+to how many ports (`get_related_events`), what is the target and does it matter (`get_asset`),
+is the source a known attacker or an internal host (`enrich_ip`), is there a vulnerability matching
+the pattern (`lookup_cve`), what is the standard name for the behaviour
+(`lookup_attack_technique`), and do the neighbouring flows score as attacks too (`predict_attack`).
+
+**How do you keep tools from leaking the answer?**
+The event store holds ground-truth labels because Phase 5 needs them to build the golden set, but
+no tool output model has a label, family, attack flag, split or feature-vector field, and a test
+walks every registered tool's output JSON schema to prove it. The threat-intel seeds list only the
+documented external attacker addresses; the infiltration victim is not pre-marked, so the agent has
+to find its internal port scan from the events.
+
+**Why a database for events instead of scanning the Parquet?**
+`get_related_events` needs indexed lookups by IP and time over 1.7 million flows, hundreds of times
+per evaluation run. Pandas scans cost about half a second each; an indexed table costs
+milliseconds. SQLAlchemy with Alembic gives the same code on SQLite today and PostgreSQL in
+Phase 6, and the brief requires migrations rather than a schema that exists only for a demo.
+
+**Why are event ids not the dataset's ids?**
+The dataset's `id` restarts at 1 in every day file, which the primary key rejected on the full load
+(the 986-row test fixture never collided by chance). `event_id` is `day_index × 1,000,000 +
+row id`; the original id is kept. A real bug caught by running the real data, not by the tests.
+
+**How do the external tools avoid hallucinated references?**
+`lookup_cve` only returns records NVD returned, with a typed `not_found` for unknown ids and
+`unavailable` when NVD is down; `lookup_attack_technique` only returns techniques from the
+official STIX bundle, whose version and fetch date are recorded. The agent may cite only ids that
+came back from a tool, which the Phase 4 critic checks deterministically.
+
+**What is the prompt-injection boundary?**
+CVE and ATT&CK descriptions are external text. They are truncated to 1,000 characters and flagged
+`untrusted_text`, and the agent renders tool results as data blocks. Flow records in this dataset
+carry no free text at all.
+
+**How do you test a tool that calls an external API?**
+The NVD client takes an injectable fetcher. Tests feed captured responses (recorded on a dated
+run and committed as fixtures), assert cache hits skip the fetcher, drive the rate limiter with a
+fake clock, and cover the `unavailable` path with a fetcher that raises. One opt-in live test
+exists and is excluded from CI by a pytest marker.

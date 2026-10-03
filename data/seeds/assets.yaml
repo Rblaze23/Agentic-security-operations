@@ -1,0 +1,49 @@
+# Asset inventory of the CIC-IDS-2017 testbed, transcribed from the dataset page.
+# Source: https://www.unb.ca/cic/datasets/ids-2017.html ("Testbed architecture" table and the
+# attack-schedule paragraph), fetched 2026-10-04. Only facts stated on that page or implied by
+# the attack schedule are recorded; nothing here tells which flows are attacks.
+source: https://www.unb.ca/cic/datasets/ids-2017.html
+fetched: "2026-10-04"
+zones:
+  - name: victim_lan
+    cidr: 192.168.10.0/24
+    description: Victim network behind the firewall
+  - name: firewall
+    cidrs: [172.16.0.1/32, 205.174.165.80/32]
+    description: Firewall (inside address 172.16.0.1, outside address 205.174.165.80)
+  - name: attacker_external
+    cidrs: [205.174.165.69/32, 205.174.165.70/32, 205.174.165.71/32, 205.174.165.73/32]
+    description: Attacker network outside the firewall
+assets:
+  - ip: 192.168.10.3
+    hostname: dns-dc
+    role: DNS and domain controller
+    os: Windows Server
+    services: [DNS/53, Active Directory]
+    criticality: critical
+  - ip: 192.168.10.50
+    hostname: web-server-16
+    role: Public web server
+    os: Ubuntu 16.04
+    public_ip: 205.174.165.68
+    services: [HTTP/80, FTP/21, SSH/22]
+    criticality: high
+    notes: Target of the FTP/SSH brute force, DoS, web attacks and DDoS in the schedule
+  - ip: 192.168.10.51
+    hostname: ubuntu-server-12
+    role: Server
+    os: Ubuntu 12.04
+    public_ip: 205.174.165.66
+    services: [OpenSSL service on port 444]
+    criticality: high
+    notes: Schedule lists Heartbleed against port 444 on this host
+  - {ip: 192.168.10.19, hostname: ubuntu-14-32, role: Workstation, os: Ubuntu 14.04 32-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.17, hostname: ubuntu-14-64, role: Workstation, os: Ubuntu 14.04 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.16, hostname: ubuntu-16-32, role: Workstation, os: Ubuntu 16.04 32-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.12, hostname: ubuntu-16-64, role: Workstation, os: Ubuntu 16.04 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.9, hostname: win7-pro, role: Workstation, os: Windows 7 Pro 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.5, hostname: win81, role: Workstation, os: Windows 8.1 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.8, hostname: win-vista, role: Workstation, os: Windows Vista 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.14, hostname: win10-pro-32, role: Workstation, os: Windows 10 Pro 32-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.15, hostname: win10-64, role: Workstation, os: Windows 10 64-bit, services: [], criticality: medium}
+  - {ip: 192.168.10.25, hostname: mac, role: Workstation, os: macOS, services: [], criticality: medium}

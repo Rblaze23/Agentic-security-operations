@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path.home() / "data" / "secops"
     mlflow_tracking_uri: str | None = None
+    database_url: str | None = None
     random_seed: int = 42
 
     @property
@@ -30,6 +31,11 @@ class Settings(BaseSettings):
     @property
     def mlflow_dir(self) -> Path:
         return self.data_dir / "mlflow"
+
+    def resolved_database_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+        return f"sqlite:///{self.data_dir / 'events.db'}"
 
     def resolved_tracking_uri(self) -> str:
         if self.mlflow_tracking_uri:

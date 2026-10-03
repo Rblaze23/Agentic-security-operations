@@ -113,6 +113,21 @@ recall, a false-positive breakdown, an explainer background sample, and the mode
 `secops-train promote-best` applies the documented champion rule (best validation metric, ties
 within 0.0005 to the simpler model, then lower validation FPR) and moves the `champion` alias.
 
+## Agent tools (Phase 3)
+
+Seven read-only, typed tools give the investigation agent real evidence to cite: event search
+and neighbourhood aggregation over an event store holding all 1.7 M flows (SQLAlchemy + Alembic,
+SQLite now, PostgreSQL later), asset and IP enrichment from the documented testbed, CVE lookup
+from NVD with a cache and rate limiter, MITRE ATT&CK technique lookup from the official STIX
+bundle (v19.2), and the detector as a tool. Every output names its source, external text is
+flagged untrusted, and a registry test proves no tool exposes a ground-truth label. Details:
+`docs/tools.md`; threat model: `docs/security.md`.
+
+```bash
+make load-events     # 1.7 M flows -> $SECOPS_DATA_DIR/events.db (migration applied first)
+make fetch-attack    # ATT&CK STIX bundle -> technique index
+```
+
 ## Security considerations
 
 Phase 1 handles no secrets and exposes no network service. Settings come from environment
@@ -146,7 +161,7 @@ flaw.* WTMC 2021.
 | 0 | Architecture, dataset choice, evaluation strategy | done |
 | 1 | Dataset pipeline, baselines, MLflow, SHAP, registry | **done** |
 | 2 | FastAPI detection service, typed schemas, Docker | not started |
-| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | not started |
+| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | **in progress** (detector tool awaits the Phase 2 merge) |
 | 4 | LangGraph investigation agent with critic and loop limits | not started |
 | 5 | Golden set, agent evaluation harness, regression gate, cost tracking | not started |
 | 6 | PostgreSQL, Langfuse, auth, CI/CD, Compose, Cloud Run | not started |

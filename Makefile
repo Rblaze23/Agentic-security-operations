@@ -1,7 +1,7 @@
 # The venv lives on the Linux filesystem: /mnt/* (DrvFs) cannot create the symlinks uv needs.
 export UV_PROJECT_ENVIRONMENT ?= $(HOME)/.venvs/secops
 
-.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui
+.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui load-events fetch-attack test-network
 
 setup:
 	uv sync --all-groups
@@ -54,3 +54,12 @@ train-all: train-binary train-family train-heldout train-ablations
 
 mlflow-ui:
 	uv run mlflow ui --backend-store-uri "$$(uv run python -c 'from secops.config import get_settings as g; print(g().resolved_tracking_uri())')"
+
+load-events:
+	uv run secops-data load-events --attempted-policy relabel_benign
+
+fetch-attack:
+	uv run python scripts/fetch_attack.py
+
+test-network:
+	uv run pytest tests/network -m network

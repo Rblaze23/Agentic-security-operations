@@ -1,0 +1,317 @@
+{
+ "version": "19.2",
+ "fetched": "2026-10-03",
+ "source_url": "https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json",
+ "techniques": [
+  {
+   "technique_id": "T1021",
+   "name": "Remote Services",
+   "tactics": [
+    "lateral-movement"
+   ],
+   "description": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into a service that accepts remote connections, such as telnet, SSH, and VNC. The adversary may then perform actions as the logged-on user. In an enterprise environment, servers and workstations can be organized into domains. Domains provide centralized identity management, allowing users to login using one set of credentials across the entire network. If an adversary is able to obtain a set of valid domain credentials, they could login to many different machines using remote access protocols such as secure shell (SSH) or remote desktop protocol (RDP).(Citation: SSH Secure Shell)(Citation: TechNet Remote Desktop Services) They could also login to accessible SaaS or IaaS services, such as those that federate their identities to the domain, or management platforms for internal virtualization environments such as VMware vCenter. Legitimate applications (such as [Software Deployment Tools](https://attac…",
+   "platforms": [
+    "Linux",
+    "macOS",
+    "Windows",
+    "IaaS",
+    "ESXi"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1021",
+   "version": "1.6",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1021.004",
+   "name": "SSH",
+   "tactics": [
+    "lateral-movement"
+   ],
+   "description": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into remote machines using Secure Shell (SSH). The adversary may then perform actions as the logged-on user. SSH is a protocol that allows authorized users to open remote shells on other computers. Many Linux and macOS versions come with SSH installed by default, although typically disabled until the user enables it. On ESXi, SSH can be enabled either directly on the host (e.g., via `vim-cmd hostsvc/enable_ssh`) or via vCenter.(Citation: Sygnia ESXi Ransomware 2025)(Citation: TrendMicro ESXI Ransomware)(Citation: Sygnia Abyss Locker 2025) The SSH server can be configured to use standard password authentication or public-private keypairs in lieu of or in addition to a password. In this authentication scenario, the user’s public key must be in a special file on the computer running the server that lists which keypairs are allowed to login as that user (i.e., [SSH Authorized Keys](https://attack.mitre.…",
+   "platforms": [
+    "ESXi",
+    "Linux",
+    "macOS"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1021/004",
+   "version": "1.3",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1046",
+   "name": "Network Service Discovery",
+   "tactics": [
+    "discovery"
+   ],
+   "description": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port, vulnerability, and/or wordlist scans using tools that are brought onto a system.(Citation: CISA AR21-126A FIVEHANDS May 2021) Within cloud environments, adversaries may attempt to discover services running on other cloud hosts. Additionally, if the cloud environment is connected to a on-premises environment, adversaries may be able to identify services running on non-cloud systems as well. Within macOS environments, adversaries may use the native Bonjour application to discover services running on other macOS hosts within a network. The Bonjour mDNSResponder daemon automatically registers and advertises a host’s registered services on the network. For example, adversaries can use a mDNS query (such as <code>dns-sd -B _ssh._tcp .</code>) to f…",
+   "platforms": [
+    "Containers",
+    "IaaS",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1046",
+   "version": "3.2",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1059",
+   "name": "Command and Scripting Interpreter",
+   "tactics": [
+    "execution"
+   ],
+   "description": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most systems come with some built-in command-line interface and scripting capabilities, for example, macOS and Linux distributions include some flavor of [Unix Shell](https://attack.mitre.org/techniques/T1059/004) while Windows installations include the [Windows Command Shell](https://attack.mitre.org/techniques/T1059/003) and [PowerShell](https://attack.mitre.org/techniques/T1059/001). There are also cross-platform interpreters such as [Python](https://attack.mitre.org/techniques/T1059/006), as well as those commonly associated with client applications such as [JavaScript](https://attack.mitre.org/techniques/T1059/007) and [Visual Basic](https://attack.mitre.org/techniques/T1059/005). Adversaries may abuse these technologies in various ways as a means …",
+   "platforms": [
+    "Containers",
+    "ESXi",
+    "IaaS",
+    "Identity Provider",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Office Suite",
+    "SaaS",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1059",
+   "version": "2.7",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1071",
+   "name": "Application Layer Protocol",
+   "tactics": [
+    "command-and-control"
+   ],
+   "description": "Adversaries may communicate using OSI application layer protocols to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, will be embedded within the protocol traffic between the client and server. Adversaries may utilize many different protocols, including those used for web browsing, transferring files, electronic mail, DNS, or publishing/subscribing. For connections that occur internally within an enclave (such as those between a proxy or pivot node and other nodes), commonly used protocols are SMB, SSH, or RDP.(Citation: Mandiant APT29 Eye Spy Email Nov 22)",
+   "platforms": [
+    "Linux",
+    "macOS",
+    "Windows",
+    "Network Devices",
+    "ESXi"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1071",
+   "version": "2.4",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1071.001",
+   "name": "Web Protocols",
+   "tactics": [
+    "command-and-control"
+   ],
+   "description": "Adversaries may communicate using application layer protocols associated with web traffic to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, will be embedded within the protocol traffic between the client and server. Protocols such as HTTP/S(Citation: CrowdStrike Putter Panda) and WebSocket(Citation: Brazking-Websockets) that carry web traffic may be very common in environments. HTTP/S packets have many fields and headers in which data can be concealed. An adversary may abuse these protocols to communicate with systems under their control within a victim network while also mimicking normal, expected traffic.",
+   "platforms": [
+    "ESXi",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1071/001",
+   "version": "1.5",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1105",
+   "name": "Ingress Tool Transfer",
+   "tactics": [
+    "command-and-control"
+   ],
+   "description": "Adversaries may transfer tools or other files from an external system into a compromised environment. Tools or files may be copied from an external adversary-controlled system to the victim network through the command and control channel or through alternate protocols such as [ftp](https://attack.mitre.org/software/S0095). Once present, adversaries may also transfer/spread tools between victim devices within a compromised environment (i.e. [Lateral Tool Transfer](https://attack.mitre.org/techniques/T1570)). On Windows, adversaries may use various utilities to download tools, such as `copy`, `finger`, [certutil](https://attack.mitre.org/software/S0160), and [PowerShell](https://attack.mitre.org/techniques/T1059/001) commands such as <code>IEX(New-Object Net.WebClient).downloadString()</code> and <code>Invoke-WebRequest</code>. On Linux and macOS systems, a variety of utilities also exist, such as `curl`, `scp`, `sftp`, `tftp`, `rsync`, `finger`, and `wget`.(Citation: t1105_lolbas) A nu…",
+   "platforms": [
+    "ESXi",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1105",
+   "version": "2.6",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1110",
+   "name": "Brute Force",
+   "tactics": [
+    "credential-access"
+   ],
+   "description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained.(Citation: TrendMicro Pawn Storm Dec 2020) Without knowledge of the password for an account or set of accounts, an adversary may systematically guess the password using a repetitive or iterative mechanism.(Citation: Dragos Crashoverride 2018) Brute forcing passwords can take place via interaction with a service that will check the validity of those credentials or offline against previously acquired credential data, such as password hashes. Brute forcing credentials may take place at various points during a breach. For example, adversaries may attempt to brute force access to [Valid Accounts](https://attack.mitre.org/techniques/T1078) within a victim environment leveraging knowledge gathered from other post-compromise behaviors such as [OS Credential Dumping](https://attack.mitre.org/techniques/T1003), [Account Discovery](https://attack.mitre.org/techniq…",
+   "platforms": [
+    "Containers",
+    "ESXi",
+    "IaaS",
+    "Identity Provider",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Office Suite",
+    "SaaS",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1110",
+   "version": "2.8",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1110.001",
+   "name": "Password Guessing",
+   "tactics": [
+    "credential-access"
+   ],
+   "description": "Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts. Without knowledge of the password for an account, an adversary may opt to systematically guess the password using a repetitive or iterative mechanism. An adversary may guess login credentials without prior knowledge of system or environment passwords during an operation by using a list of common passwords. Password guessing may or may not take into account the target's policies on password complexity or use policies that may lock accounts out after a number of failed attempts. Guessing passwords can be a risky option because it could cause numerous authentication failures and account lockouts, depending on the organization's login failure policies. (Citation: Cylance Cleaver) Typically, management services over commonly used ports are used when guessing passwords. Commonly targeted services include the following: * SSH (22/TCP) * Telnet (23/…",
+   "platforms": [
+    "Containers",
+    "ESXi",
+    "IaaS",
+    "Identity Provider",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Office Suite",
+    "SaaS",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1110/001",
+   "version": "1.7",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1190",
+   "name": "Exploit Public-Facing Application",
+   "tactics": [
+    "initial-access"
+   ],
+   "description": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration. Exploited applications are often websites/web servers, but can also include databases (like SQL), standard services (like SMB or SSH), network device administration and management protocols (like SNMP and Smart Install), and any other system with Internet-accessible open sockets.(Citation: NVD CVE-2016-6662)(Citation: CIS Multiple SMB Vulnerabilities)(Citation: US-CERT TA18-106A Network Infrastructure Devices 2018)(Citation: Cisco Blog Legacy Device Attacks)(Citation: NVD CVE-2014-7169) On ESXi infrastructure, adversaries may exploit exposed OpenSLP services; they may alternatively exploit exposed VMware vCenter servers.(Citation: Recorded Future ESXiArgs Ransomware 2023)(Citation: Ars Technica VMWare Code Execution Vulnerability 2021) Depending on the flaw being exploited, this ma…",
+   "platforms": [
+    "Containers",
+    "ESXi",
+    "IaaS",
+    "Linux",
+    "macOS",
+    "Network Devices",
+    "Windows"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1190",
+   "version": "2.8",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1498",
+   "name": "Network Denial of Service",
+   "tactics": [
+    "impact"
+   ],
+   "description": "Adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Network DoS can be performed by exhausting the network bandwidth services rely on. Example resources include specific websites, email services, DNS, and web-based applications. Adversaries have been observed conducting network DoS attacks for political purposes(Citation: FireEye OpPoisonedHandover February 2016) and to support other malicious activities, including distraction(Citation: FSISAC FraudNetDoS September 2012), hacktivism, and extortion.(Citation: Symantec DDoS October 2014) A Network DoS will occur when the bandwidth capacity of the network connection to a system is exhausted due to the volume of malicious traffic directed at the resource or the network connections and network devices the resource relies on. For example, an adversary may send 10Gbps of traffic to a server that is hosted by a network with a 1Gbps connection to the internet. Thi…",
+   "platforms": [
+    "Windows",
+    "IaaS",
+    "Linux",
+    "macOS",
+    "Containers"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1498",
+   "version": "1.2",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1498.001",
+   "name": "Direct Network Flood",
+   "tactics": [
+    "impact"
+   ],
+   "description": "Adversaries may attempt to cause a denial of service (DoS) by directly sending a high-volume of network traffic to a target. This DoS attack may also reduce the availability and functionality of the targeted system(s) and network. [Direct Network Flood](https://attack.mitre.org/techniques/T1498/001)s are when one or more systems are used to send a high-volume of network packets towards the targeted service's network. Almost any network protocol may be used for flooding. Stateless protocols such as UDP or ICMP are commonly used but stateful protocols such as TCP can be used as well. Botnets are commonly used to conduct network flooding attacks against networks and services. Large botnets can generate a significant amount of traffic from systems spread across the global Internet. Adversaries may have the resources to build out and control their own botnet infrastructure or may rent time on an existing botnet to conduct an attack. In some of the worst cases for distributed DoS (DDoS), so…",
+   "platforms": [
+    "Windows",
+    "IaaS",
+    "Linux",
+    "macOS"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1498/001",
+   "version": "1.4",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1499",
+   "name": "Endpoint Denial of Service",
+   "tactics": [
+    "impact"
+   ],
+   "description": "Adversaries may perform Endpoint Denial of Service (DoS) attacks to degrade or block the availability of services to users. Endpoint DoS can be performed by exhausting the system resources those services are hosted on or exploiting the system to cause a persistent crash condition. Example services include websites, email services, DNS, and web-based applications. Adversaries have been observed conducting DoS attacks for political purposes(Citation: FireEye OpPoisonedHandover February 2016) and to support other malicious activities, including distraction(Citation: FSISAC FraudNetDoS September 2012), hacktivism, and extortion.(Citation: Symantec DDoS October 2014) An Endpoint DoS denies the availability of a service without saturating the network used to provide access to the service. Adversaries can target various layers of the application stack that is hosted on the system used to provide the service. These layers include the Operating Systems (OS), server applications such as web ser…",
+   "platforms": [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Containers",
+    "IaaS"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1499",
+   "version": "1.2",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1499.002",
+   "name": "Service Exhaustion Flood",
+   "tactics": [
+    "impact"
+   ],
+   "description": "Adversaries may target the different network services provided by systems to conduct a denial of service (DoS). Adversaries often target the availability of DNS and web services, however others have been targeted as well.(Citation: Arbor AnnualDoSreport Jan 2018) Web server software can be attacked through a variety of means, some of which apply generally while others are specific to the software being used to provide the service. One example of this type of attack is known as a simple HTTP flood, where an adversary sends a large number of HTTP requests to a web server to overwhelm it and/or an application that runs on top of it. This flood relies on raw volume to accomplish the objective, exhausting any of the various resources required by the victim software to provide the service.(Citation: Cloudflare HTTPflood) Another variation, known as a SSL renegotiation attack, takes advantage of a protocol feature in SSL/TLS. The SSL/TLS protocol suite includes mechanisms for the client and …",
+   "platforms": [
+    "Windows",
+    "IaaS",
+    "Linux",
+    "macOS"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1499/002",
+   "version": "1.4",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1595",
+   "name": "Active Scanning",
+   "tactics": [
+    "reconnaissance"
+   ],
+   "description": "Adversaries may execute active reconnaissance scans to gather information that can be used during targeting. Active scans are those where the adversary probes victim infrastructure via network traffic, as opposed to other forms of reconnaissance that do not involve direct interaction. Adversaries may perform different forms of active scanning depending on what information they seek to gather. These scans can also be performed in various ways, including using native features of network protocols such as ICMP.(Citation: Botnet Scan)(Citation: OWASP Fingerprinting) Information from these scans may reveal opportunities for other forms of reconnaissance (ex: [Search Open Websites/Domains](https://attack.mitre.org/techniques/T1593) or [Search Open Technical Databases](https://attack.mitre.org/techniques/T1596)), establishing operational resources (ex: [Develop Capabilities](https://attack.mitre.org/techniques/T1587) or [Obtain Capabilities](https://attack.mitre.org/techniques/T1588)), and/o…",
+   "platforms": [
+    "PRE"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1595",
+   "version": "1.0",
+   "is_subtechnique": false,
+   "untrusted_text": true
+  },
+  {
+   "technique_id": "T1595.001",
+   "name": "Scanning IP Blocks",
+   "tactics": [
+    "reconnaissance"
+   ],
+   "description": "Adversaries may scan victim IP blocks to gather information that can be used during targeting. Public IP addresses may be allocated to organizations by block, or a range of sequential addresses. Adversaries may scan IP blocks in order to [Gather Victim Network Information](https://attack.mitre.org/techniques/T1590), such as which IP addresses are actively in use as well as more detailed information about hosts assigned these addresses. Scans may range from simple pings (ICMP requests and responses) to more nuanced scans that may reveal host software/versions via server banners or other network artifacts.(Citation: Botnet Scan) Information from these scans may reveal opportunities for other forms of reconnaissance (ex: [Search Open Websites/Domains](https://attack.mitre.org/techniques/T1593) or [Search Open Technical Databases](https://attack.mitre.org/techniques/T1596)), establishing operational resources (ex: [Develop Capabilities](https://attack.mitre.org/techniques/T1587) or [Obtai…",
+   "platforms": [
+    "PRE"
+   ],
+   "url": "https://attack.mitre.org/techniques/T1595/001",
+   "version": "1.1",
+   "is_subtechnique": true,
+   "untrusted_text": true
+  }
+ ]
+}

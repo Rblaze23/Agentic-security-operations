@@ -1,0 +1,71 @@
+"""ORM models. `Event` holds one flow with its metadata, hidden ground truth and feature vector."""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from sqlalchemy import BigInteger, Index, Integer, LargeBinary, SmallInteger, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Event(Base):
+    """One network flow. Timestamps are stored as UTC microseconds since the epoch (`ts_us`) so
+    range queries are plain integer comparisons on every backend. `event_id` is
+    `day_index * 1_000_000 + source_row_id` because the dataset's `id` restarts at 1 per day."""
+
+    __tablename__ = "events"
+
+    event_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    source_row_id: Mapped[int] = mapped_column(BigInteger, nullable=False)  # dataset `id` (per day)
+    day: Mapped[str] = mapped_column(String(10), nullable=False)
+    ts_us: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    source_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+    source_port: Mapped[int] = mapped_column(Integer, nullable=False)
+    destination_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+    destination_port: Mapped[int] = mapped_column(Integer, nullable=False)
+    protocol: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    flow_duration_us: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    fwd_packets: Mapped[int] = mapped_column(Integer, nullable=False)
+    bwd_packets: Mapped[int] = mapped_column(Integer, nullable=False)
+    fwd_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    bwd_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    syn_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    fin_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    rst_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    ack_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    feature_spec_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    features: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    # Ground truth: used only to build evaluation sets. No tool returns these columns.
+    label_raw: Mapped[str] = mapped_column(String(64), nullable=False)
+    label: Mapped[str] = mapped_column(String(64), nullable=False)
+    family: Mapped[str] = mapped_column(String(32), nullable=False)
+    is_attack: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    split_chrono: Mapped[str] = mapped_column(String(5), nullable=False)
+    split_heldout: Mapped[str] = mapped_column(String(5), nullable=False)
+
+    __table_args__ = (
+        Index("ix_events_source_ip_ts", "source_ip", "ts_us"),
+        Index("ix_events_destination_ip_ts", "destination_ip", "ts_us"),
+        Index("ix_events_ts", "ts_us"),
+        Index("ix_events_destination_port", "destination_port"),
+    )
+
+
+class LoadRun(Base):
+    """Provenance of each `load-events` run."""
+
+    __tablename__ = "load_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    loaded_at: Mapped[datetime] = mapped_column(nullable=False)
+    source_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    attempted_policy: Mapped[str] = mapped_column(String(32), nullable=False)
+    feature_spec_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    git_sha: Mapped[str] = mapped_column(String(40), nullable=False)
+    rows: Mapped[int] = mapped_column(Integer, nullable=False)
+    seconds: Mapped[float] = mapped_column(nullable=False)

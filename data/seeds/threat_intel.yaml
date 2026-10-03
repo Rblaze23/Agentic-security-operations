@@ -1,0 +1,17 @@
+# Known-bad addresses for the CIC-IDS-2017 testbed. Source as in assets.yaml, fetched 2026-10-04.
+source: https://www.unb.ca/cic/datasets/ids-2017.html
+fetched: "2026-10-04"
+known_attackers:
+  - ip: 205.174.165.73
+    notes: Kali Linux attacker machine (external)
+  - ip: 205.174.165.69
+    notes: Windows attacker machine (external); DDoS LOIT source
+  - ip: 205.174.165.70
+    notes: Windows attacker machine (external); DDoS LOIT source
+  - ip: 205.174.165.71
+    notes: Windows attacker machine (external); DDoS LOIT source
+  - ip: 172.16.0.1
+    notes: >-
+      Firewall inside address. In the flow records, traffic from the external attackers appears
+      with this source address (NAT), so flows from 172.16.0.1 to the victim LAN are attacker
+      traffic entering through the firewall, not the firewall acting on its own.

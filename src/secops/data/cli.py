@@ -55,3 +55,32 @@ def build(
         st.raw_dir, st.processed_dir, st.reports_dir, attempted_policy, subdir=subdir
     )
     typer.echo(f"built {out}")
+
+
+@app.command(name="load-events")
+def load_events_cmd(
+    attempted_policy: AttemptedPolicy = AttemptedPolicy.RELABEL_BENIGN,
+    data_dir: Path | None = None,
+    chunk_size: int = 50_000,
+) -> None:
+    """Apply migrations and load processed/<policy>/flows.parquet into the events table."""
+    from secops.db.events_loader import load_events
+    from secops.db.session import make_engine, upgrade_to_head
+    from secops.detection.features import FEATURE_SPEC_V1
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    st = get_settings() if data_dir is None else Settings(data_dir=data_dir)
+    url = st.resolved_database_url()
+    upgrade_to_head(url)
+    parquet = st.processed_dir / str(attempted_policy) / "flows.parquet"
+    report = load_events(
+        parquet,
+        make_engine(url),
+        FEATURE_SPEC_V1,
+        chunk_size=chunk_size,
+        attempted_policy=str(attempted_policy),
+    )
+    typer.echo(
+        f"loaded {report.rows:,} events from {parquet} into {url} in {report.seconds:.0f}s "
+        f"({report.db_bytes / 1e6:.0f} MB)"
+    )
