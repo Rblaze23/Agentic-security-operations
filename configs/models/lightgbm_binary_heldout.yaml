@@ -1,0 +1,12 @@
+experiment: secops/detection-heldout
+run_name: lightgbm_none_heldout_friday
+task: binary
+model: lightgbm
+weighting: none
+feature_spec: v1-noport
+split_strategy: heldout_friday
+attempted_policy: relabel_benign
+max_fpr: 0.01
+shap_sample: 20000
+# Supplied with --set at run time: the run id of the promoted chrono champion.
+reuse_threshold_from_run: null
