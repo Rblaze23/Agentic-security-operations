@@ -144,7 +144,8 @@ rows.
 ### 4.2 Infinity and missing values
 
 10 cells contain `±Infinity` (`Flow Bytes/s` and `Flow Packets/s` on zero-duration flows: 6 in
-monday.csv, 2 in wednesday.csv, 2 in thursday.csv). They become NaN; gradient-boosted trees handle
+monday.csv, 2 in wednesday.csv, 2 in thursday.csv, recorded as `inf_cells_by_day` in the cleaning
+report). They become NaN; gradient-boosted trees handle
 NaN natively and logistic regression receives median imputation fitted on the training split only.
 No column has NaN in the delivered files, no column is constant across the five files, and no
 feature column is non-numeric. (The original CSVs had NaNs and a duplicated `Fwd Header Length`

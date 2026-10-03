@@ -34,13 +34,13 @@ validation FPR ≤ 1%):
 
 | Model | Weighting | Test PR-AUC | Recall | FPR | Precision | Fit time |
 |---|---|---|---|---|---|---|
-| Logistic regression | balanced | 0.9930 | 98.2% | 0.57% | 97.1% | 97 s |
-| XGBoost | balanced | 0.9999 | 99.95% | 0.53% | 97.4% | 134 s |
-| **LightGBM (champion)** | none | **0.9999** | **99.93%** | **0.45%** | **97.8%** | 105 s |
+| Logistic regression | balanced | 0.9930 | 98.2% | 0.57% | 97.1% | 89 s |
+| XGBoost | balanced | 0.9999 | 99.95% | 0.53% | 97.4% | 41 s |
+| **LightGBM (champion)** | none | **0.9999** | **99.93%** | **0.45%** | **97.8%** | 21 s |
 
 **Attack-family classifier** (six families, attack rows only): champion LightGBM, validation
-macro-F1 0.9998, test macro-F1 0.9619, test weighted-F1 0.9991. The macro gap is one class:
-`web_attack` has 16 test rows and 8 DoS flows were mislabelled as web attack.
+macro-F1 0.9996, test macro-F1 0.9613, test weighted-F1 0.9989. The macro gap is one class:
+`web_attack` has 16 test rows and 8 flows of other families were labelled as web attack.
 
 **Held-out Friday (the honest number).** Train on Monday–Thursday, test on Friday, where Botnet and
 DDoS never appear in training, threshold reused unchanged from the champion:
@@ -108,8 +108,10 @@ uv run secops-train report --experiment secops/detection-binary
 ```
 
 Each run logs parameters, metrics (including per-label recall and recall at fixed FPRs), the
-PR curve, confusion matrix, SHAP summary, feature spec, threshold, an explainer background sample,
-and the model; `secops-train promote-best` moves the `champion` alias in the MLflow registry.
+PR curve, confusion matrix, SHAP summary, feature spec, threshold, a threshold sweep with per-label
+recall, a false-positive breakdown, an explainer background sample, and the model;
+`secops-train promote-best` applies the documented champion rule (best validation metric, ties
+within 0.0005 to the simpler model, then lower validation FPR) and moves the `champion` alias.
 
 ## Security considerations
 

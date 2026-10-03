@@ -1,9 +1,11 @@
 # Evaluation
 
-Every number below was produced by `secops-train` on 2026-10-03 and lives in MLflow under
-`$SECOPS_DATA_DIR/mlflow` (SQLite backend). Tables are pasted from `secops-train report`; run ids
-are listed in section 7 so each row can be traced. The agent-evaluation sections arrive with
-Phase 5.
+Every number below was produced by `secops-train` on 2026-10-03 (second, final run after the
+review fix pass) and lives in MLflow under `$SECOPS_DATA_DIR/mlflow` (SQLite backend, artifacts
+under `mlflow/artifacts/`). Tables are pasted from `secops-train report`; the analysis numbers in
+sections 2.1, 4 and 5 come from the per-run artifacts `per_label_recall.csv`,
+`threshold_sweep.json` and `fp_breakdown.json`; run ids are listed in section 7 so each row can be
+traced. The agent-evaluation sections arrive with Phase 5.
 
 ## 1. Protocol in one paragraph
 
@@ -22,22 +24,24 @@ Six runs: three models × {no weighting, balanced sample weights}. Test split: 2
 
 | run_name          | model    | weighting   |   val_pr_auc |   test_pr_auc |   test_recall |   test_fpr |   test_precision |   test_f1 |   test_roc_auc |   threshold | run_id   |
 |:------------------|:---------|:------------|-------------:|--------------:|--------------:|-----------:|-----------------:|----------:|---------------:|------------:|:---------|
-| logreg_none       | logreg   | none        |       0.9945 |        0.9936 |        0.9797 |     0.007  |           0.9649 |    0.9722 |         0.9973 |      0.1769 | 1bfeaf58 |
-| logreg_balanced   | logreg   | balanced    |       0.9947 |        0.993  |        0.9816 |     0.0057 |           0.9713 |    0.9764 |         0.9979 |      0.528  | 2e1f7ce5 |
-| xgboost_none      | xgboost  | none        |       1      |        0.9999 |        0.9997 |     0.0076 |           0.9628 |    0.9809 |         1      |      0.0002 | e5555642 |
-| xgboost_balanced  | xgboost  | balanced    |       1      |        0.9999 |        0.9995 |     0.0053 |           0.974  |    0.9866 |         1      |      0.0008 | d4629d73 |
-| lightgbm_none     | lightgbm | none        |       1      |        0.9999 |        0.9993 |     0.0045 |           0.9778 |    0.9884 |         1      |      0.0002 | c91b4a71 |
-| lightgbm_balanced | lightgbm | balanced    |       1      |        0.9999 |        0.9997 |     0.0087 |           0.9576 |    0.9782 |         1      |      0      | 1f2624a5 |
+| lightgbm_none     | lightgbm | none        |       1      |        0.9999 |        0.9993 |     0.0045 |           0.9778 |    0.9884 |         1      |      0.0002 | dcc36c43 |
+| lightgbm_balanced | lightgbm | balanced    |       1      |        0.9999 |        0.9997 |     0.0087 |           0.9576 |    0.9782 |         1      |      0      | 7335febb |
+| xgboost_none      | xgboost  | none        |       1      |        0.9999 |        0.9997 |     0.0076 |           0.9628 |    0.9809 |         1      |      0.0002 | a567ffb7 |
+| xgboost_balanced  | xgboost  | balanced    |       1      |        0.9999 |        0.9995 |     0.0053 |           0.974  |    0.9866 |         1      |      0.0008 | 040372e7 |
+| logreg_none       | logreg   | none        |       0.9945 |        0.9936 |        0.9797 |     0.007  |           0.9649 |    0.9722 |         0.9973 |      0.1769 | a77a701f |
+| logreg_balanced   | logreg   | balanced    |       0.9947 |        0.993  |        0.9816 |     0.0057 |           0.9713 |    0.9764 |         0.9979 |      0.528  | 0867b1bc |
 
 Validation PR-AUC at full precision: xgboost_balanced 0.999995, xgboost_none 0.999994,
 lightgbm_none 0.999993, lightgbm_balanced 0.999993, logreg_balanced 0.994671, logreg_none 0.994478.
 
-**Champion: `lightgbm_none` (run c91b4a71), registered as `secops-detector` version 1, alias
-`champion`.** Rule: highest validation PR-AUC; the four tree runs tie within 0.000002, which is
-inside the documented tie band (0.0005), so the simpler model wins (LightGBM over XGBoost); between
-the two LightGBM runs the unweighted one has the lower validation FPR at its operating point
-(0.0043 vs 0.0077) and higher precision. `secops-train promote-best` would have picked
-xgboost_balanced on the raw maximum; the tie rule was applied by hand and recorded in the ledger.
+**Champion: `lightgbm_none` (run dcc36c43), registered as `secops-detector` version 1, alias
+`champion`.** Rule, implemented in `secops.detection.selection.choose_champion` and applied by
+`secops-train promote-best`: highest validation PR-AUC among finished runs; every run within
+0.0005 of the best is a tie, resolved by the simpler model (logreg < lightgbm < xgboost), then by
+the lower validation FPR at the operating point. Here the four tree runs tie within 0.000002, so
+LightGBM wins over XGBoost, and the unweighted LightGBM wins on validation FPR (0.0043 vs 0.0077).
+The command's own output: `tie within 0.0005 of best val_pr_auc (4 runs): simpler model, then
+lower val_fpr`.
 
 Champion operating point (chosen on validation): threshold 0.000242, validation FPR 0.429%,
 validation recall 99.998%. On test: recall 99.93%, FPR 0.45%, precision 97.78%, 963 false positives
@@ -45,8 +49,9 @@ and 31 missed attacks out of 257,252 flows; Brier score 0.0013. Recall at fixed 
 0.1%, 99.93% at 0.5%, 99.99% at 1%, 99.99% at 5%. The max-F1 threshold would be 0.322; the FPR rule
 picks a far lower one because the score distribution is almost perfectly bimodal.
 
-Wall-clock on 8 cores: LightGBM fit 105–158 s, XGBoost 134–171 s, logistic regression 78–97 s;
-SHAP on 20,000 rows: LightGBM 15–20 s, XGBoost 4 s, logistic regression 0.2 s.
+Wall-clock on 8 cores (`fit_seconds` metric): LightGBM 21–34 s, XGBoost 41–47 s, logistic
+regression 74–89 s; SHAP on 20,000 validation rows (`explain_seconds`): LightGBM 15–21 s, XGBoost
+4 s, logistic regression under 1 s.
 
 ### 2.1 Per-label recall on the test split (binary task, champion threshold)
 
@@ -109,16 +114,19 @@ Attack rows only, six classes (`rare_exploit` excluded, 47 rows). Test split: 42
 
 | run_name                 | model    | weighting   |   val_macro_f1 |   test_macro_f1 | test_weighted_f1 | test_log_loss | run_id   |
 |:-------------------------|:---------|:------------|---------------:|----------------:|-----------------:|--------------:|:---------|
-| lightgbm_family_none     | lightgbm | none        |         0.9998 |          0.9619 |           0.9991 |        0.0031 | 11a7c46d |
-| xgboost_family_balanced  | xgboost  | balanced    |         0.9991 |          0.9616 |           0.9987 |        0.0081 | 5e8d1a57 |
-| xgboost_family_none      | xgboost  | none        |         0.9946 |          0.9978 |           0.9992 |        0.0042 | 07564645 |
-| lightgbm_family_balanced | lightgbm | balanced    |         0.9905 |          0.9708 |           0.9986 |        0.0078 | 6518f85d |
+| lightgbm_family_none     | lightgbm | none        |         0.9996 |          0.9613 |           0.9989 |        0.0030 | 79e4b102 |
+| xgboost_family_balanced  | xgboost  | balanced    |         0.9991 |          0.9616 |           0.9987 |        0.0081 | 9682dde2 |
+| xgboost_family_none      | xgboost  | none        |         0.9946 |          0.9978 |           0.9992 |        0.0042 | 66a8b919 |
+| lightgbm_family_balanced | lightgbm | balanced    |         0.9905 |          0.9708 |           0.9986 |        0.0078 | 7c851e2a |
 
-**Champion: `lightgbm_family_none` (run 11a7c46d), registered as `secops-family-classifier`
-version 1, alias `champion`** — highest validation macro-F1, as the rule says. Its test macro-F1
-(0.9619) is lower than xgboost_family_none's (0.9978). Selecting on validation and reporting on
-test is the discipline; swapping champions after looking at test would be the leak the protocol
-exists to prevent.
+**Champion: `lightgbm_family_none` (run 79e4b102), registered as `secops-family-classifier`
+version 1, alias `champion`.** The two best validation scores (0.999552 and 0.999103) fall inside
+the 0.0005 tie band, so the simpler model wins (`promote-best`: `tie within 0.0005 of best
+val_macro_f1 (2 runs): simpler model, then lower val_fpr`). Its test macro-F1 (0.9613) is lower
+than xgboost_family_none's (0.9978). Selecting on validation and reporting on test is the
+discipline; swapping champions after looking at test would be the leak the protocol exists to
+prevent. Balanced weights helped XGBoost on validation (0.9991 vs 0.9946) and hurt LightGBM
+(0.9905 vs 0.9996).
 
 Per-class on test, champion:
 
@@ -126,25 +134,25 @@ Per-class on test, champion:
 |---|---|---|---|---|
 | botnet | 0.974 | 1.000 | 0.987 | 111 |
 | brute_force | 0.999 | 0.992 | 0.996 | 1,041 |
-| ddos | 1.000 | 0.999 | 0.999 | 14,272 |
-| dos | 1.000 | 1.000 | 1.000 | 25,747 |
-| port_scan | 0.981 | 1.000 | 0.990 | 1,173 |
+| ddos | 1.000 | 0.9985 | 0.999 | 14,272 |
+| dos | 0.9995 | 0.9997 | 1.000 | 25,747 |
+| port_scan | 0.981 | 0.992 | 0.986 | 1,173 |
 | web_attack (low support) | 0.667 | 1.000 | 0.800 | 16 |
 
-The whole macro-F1 gap is `web_attack`: 8 DoS flows out of 25,747 were predicted as web attack,
-and against 16 true web-attack rows that is a precision of 0.667. Confusion matrix (rows actual,
-columns predicted, order botnet / brute_force / ddos / dos / port_scan / web_attack):
+Most of the macro-F1 gap is `web_attack`: 7 DoS flows and 1 brute-force flow were predicted as web
+attack, and against 16 true web-attack rows that is a precision of 0.667. Confusion matrix (rows
+actual, columns predicted, order botnet / brute_force / ddos / dos / port_scan / web_attack):
 
 ```
 botnet       [  111,     0,     0,     0,    0,  0]
 brute_force  [    3,  1033,     0,     3,    1,  1]
 ddos         [    0,     0, 14250,     1,   21,  0]
 dos          [    0,     1,     0, 25738,    1,  7]
-port_scan    [    0,     0,     0,     0, 1173,  0]
+port_scan    [    0,     0,     0,     9, 1164,  0]
 web_attack   [    0,     0,     0,     0,    0, 16]
 ```
 
-Weighted F1 (0.9991) says the classifier is right on almost every flow; macro-F1 says the smallest
+Weighted F1 (0.9989) says the classifier is right on almost every flow; macro-F1 says the smallest
 class is where the errors concentrate. Both are true, and the 104-row `web_attack` class is flagged
 low-support everywhere it appears.
 
@@ -156,21 +164,27 @@ Botnet and DDoS never appear in training.
 
 | run_name                     | model    |   val_pr_auc |   test_pr_auc |   test_recall |   test_fpr |   test_precision |   test_f1 |   test_roc_auc |   threshold | run_id   |
 |:-----------------------------|:---------|-------------:|--------------:|--------------:|-----------:|-----------------:|----------:|---------------:|------------:|:---------|
-| lightgbm_none_heldout_friday | lightgbm |       0.9999 |        0.9991 |        0.9928 |     0.0167 |           0.9589 |    0.9755 |         0.9997 |      0.0002 | 70174747 |
+| lightgbm_none_heldout_friday | lightgbm |       0.9999 |        0.9991 |        0.9928 |     0.0167 |           0.9589 |    0.9755 |         0.9997 |      0.0002 | a174088a |
 
-Per-label recall on Friday at the reused threshold: **Botnet 6.0%**, DDoS 100%, Portscan 99.2%.
-Brier score 0.206 (versus 0.0013 in-distribution): the probabilities are badly calibrated on unseen
-attacks. Score distribution of Friday attacks: median 0.12; Botnet median 0.0002 (every Botnet flow
-scores below 0.05); DDoS median 0.12 (98.8% below 0.5); Portscan median 0.013 (71.5% below 0.05).
+Per-label recall on Friday at the reused threshold: **Botnet 6.0%**, DDoS 100%, Portscan 99.2%
+(4,154 false positives, 706 misses). Brier score 0.206 (versus 0.0013 in-distribution): the
+probabilities are badly calibrated on unseen attacks.
 
-What the same model would do at other thresholds (reference only; thresholds are never tuned on
-test):
+What the same model does at other thresholds, from the run's `threshold_sweep.json` (reference
+only; thresholds are never tuned on test):
 
 | Threshold | Recall | FPR | Precision | Botnet | DDoS | Portscan |
 |---|---|---|---|---|---|---|
 | 0.000242 (reused, deployed) | 99.3% | 1.67% | 95.9% | 6.0% | 100% | 99.2% |
+| 0.001 | 99.1% | 0.56% | 98.6% | 0% | 100% | 92.3% |
+| 0.01 | 98.5% | 0.07% | 99.8% | 0% | 100% | 57.9% |
 | 0.05 | 96.7% | 0.01% | 99.97% | 0% | 98.6% | 28.5% |
+| 0.1 | 87.5% | 0.01% | 99.98% | 0% | 89.3% | 24.1% |
+| 0.25 | 7.1% | 0.00% | 99.9% | 0% | 7.0% | 13.6% |
 | 0.5 (conventional) | 1.3% | 0.00% | 99.8% | 0% | 1.2% | 8.7% |
+
+So every Botnet flow scores below 0.001, 98.8% of DDoS flows score below 0.5, and 71.5% of
+Portscan flows score below 0.05.
 
 Reading: the in-distribution 0.9999 PR-AUC does not transfer. An unseen command-and-control
 pattern is almost entirely missed; the DDoS flood is caught only because the deployed threshold is
@@ -186,32 +200,34 @@ Champion configuration with exactly one variable changed.
 
 | run_name                     | change | val_pr_auc | test_pr_auc | test_recall | test_fpr | test_precision | threshold | FN | FP | run_id |
 |:-----------------------------|:-------|-----------:|------------:|------------:|---------:|---------------:|----------:|---:|---:|:-------|
-| lightgbm_none (champion)     | —      | 0.999993 | 0.999931 | 99.93% | 0.45% | 97.78% | 0.00024 | 31 | 963 | c91b4a71 |
-| lightgbm_none_withport       | `Dst Port` added as a feature | 0.999994 | 0.999970 | 99.99% | 0.46% | 97.74% | 0.00004 | 3 | 979 | d3ff35ec |
-| lightgbm_none_attempted_drop | Attempted flows dropped instead of relabelled benign | 1.000000 | 0.999956 | 99.82% | 0.012% | 99.94% | 0.0016 | 75 | 25 | 7354967b |
+| lightgbm_none (champion)     | —      | 0.999993 | 0.999931 | 99.93% | 0.45% | 97.78% | 0.00024 | 31 | 963 | dcc36c43 |
+| lightgbm_none_withport       | `Dst Port` added as a feature | 0.999994 | 0.999971 | 99.99% | 0.46% | 97.74% | 0.00004 | 3 | 979 | d10efe46 |
+| lightgbm_none_attempted_drop | Attempted flows dropped instead of relabelled benign | 0.999998 | 0.999962 | 99.82% | 0.012% | 99.94% | 0.0016 | 75 | 25 | 0cc2305b |
 
 **Port.** With the destination port the model misses 3 attack flows instead of 31 and every
 per-label recall except Portscan reaches 1.0. In this testbed attacks target five ports, so the
 port is a shortcut that would not survive a different network; the gain confirms the decision to
 exclude it and to let the Phase 3 tools, not the model, reason about ports.
 
-**Attempted policy.** PR-AUC is unchanged within noise (0.99996 vs 0.99993). The operating-point
+**Attempted policy.** PR-AUC is unchanged within noise (0.999962 vs 0.999931). The operating-point
 differences (25 vs 963 false positives, 75 vs 31 misses) come from where the FPR rule placed the
-threshold on a near-separable validation set (0.0016 vs 0.00024), not from the policy itself: only
-7 of the champion's 963 false positives are relabelled Attempted flows (all `Botnet - Attempted`);
-645 are genuine Friday benign flows, mostly to ports 80 and 443. The authors' recommended policy
-(relabel benign) stays the default.
+threshold on a near-separable validation set (0.0016 vs 0.00024), not from the policy itself: the
+champion's `fp_breakdown.json` shows only 7 of its 963 false positives are relabelled Attempted
+flows (all `Botnet - Attempted`). The authors' recommended policy (relabel benign) stays the
+default.
 
-### 5.1 Where the champion's false positives come from
+### 5.1 Where the champion's false positives come from (`fp_breakdown.json`)
 
-| Source of the 963 test false positives | Count |
+| Day of the 963 test false positives | Count |
 |---|---|
-| Benign flows on Friday | 645 |
-| Benign flows on Monday–Thursday | 311 |
-| Relabelled `Botnet - Attempted` flows | 7 |
+| Friday (includes the 7 `Botnet - Attempted` flows) | 652 |
+| Monday | 86 |
+| Thursday | 80 |
+| Tuesday | 73 |
+| Wednesday | 72 |
 
-Friday's benign background traffic is where the detector is least sure of itself, which matches the
-held-out result: Friday looks different.
+By raw label: 956 BENIGN, 7 `Botnet - Attempted`. Friday's benign background traffic is where the
+detector is least sure of itself, which matches the held-out result: Friday looks different.
 
 ## 6. Reproducing
 
@@ -219,27 +235,34 @@ held-out result: Friday looks different.
 export SECOPS_DATA_DIR=$HOME/data/secops
 uv run secops-data verify && make data-build && make train-all
 uv run secops-train report --experiment secops/detection-binary
+uv run secops-train promote-best --experiment secops/detection-binary --model-name secops-detector
 ```
+
+`make train-all` was run twice on 2026-10-03; the second run (after the review fix pass, with the
+artifact root under the data directory and the promotion rule in code) produced identical binary,
+held-out and ablation metrics to four decimals and the same two champions; the LightGBM family run
+moved by 0.0004 validation macro-F1 (LightGBM is not bit-reproducible across thread schedules).
 
 ## 7. Run ids
 
 | run_name | experiment | run_id |
 |---|---|---|
-| lightgbm_none (champion) | secops/detection-binary | c91b4a71f38e4293ae4a9403f0556581 |
-| lightgbm_balanced | secops/detection-binary | 1f2624a5debf47f486961b32037e906b |
-| xgboost_balanced | secops/detection-binary | d4629d733c0c423fbef55242e6172435 |
-| xgboost_none | secops/detection-binary | e55556428f58412cb08bc85eea13e7ea |
-| logreg_balanced | secops/detection-binary | 2e1f7ce5cd2c45b8bae60d8b3f56ae08 |
-| logreg_none | secops/detection-binary | 1bfeaf5884c849c68bbb0d0dcf66d05a |
-| lightgbm_family_none (champion) | secops/detection-family | 11a7c46d15a245ea94626c15ca3657f0 |
-| lightgbm_family_balanced | secops/detection-family | 6518f85d13d746d58bc85eae706d2a32 |
-| xgboost_family_balanced | secops/detection-family | 5e8d1a57f5914847b9060c32d9be44ca |
-| xgboost_family_none | secops/detection-family | 0756464516804dc28506247eacf375e5 |
-| lightgbm_none_heldout_friday | secops/detection-heldout | 701747470c534ed68defd979e32fe74c |
-| lightgbm_none_withport | secops/detection-ablations | d3ff35ecd36d4ddabf019fa57c581cbe |
-| lightgbm_none_attempted_drop | secops/detection-ablations | 7354967b3cfa4690a3a14d500f2b9165 |
+| lightgbm_none (champion) | secops/detection-binary | dcc36c43a75749eab6c77e55e79cf837 |
+| lightgbm_balanced | secops/detection-binary | 7335febb |
+| xgboost_balanced | secops/detection-binary | 040372e7 |
+| xgboost_none | secops/detection-binary | a567ffb7 |
+| logreg_balanced | secops/detection-binary | 0867b1bc |
+| logreg_none | secops/detection-binary | a77a701f |
+| lightgbm_family_none (champion) | secops/detection-family | 79e4b102f4c14c57951e91d61496beac |
+| lightgbm_family_balanced | secops/detection-family | 7c851e2a |
+| xgboost_family_balanced | secops/detection-family | 9682dde2 |
+| xgboost_family_none | secops/detection-family | 66a8b919 |
+| lightgbm_none_heldout_friday | secops/detection-heldout | a174088a |
+| lightgbm_none_withport | secops/detection-ablations | d10efe46 |
+| lightgbm_none_attempted_drop | secops/detection-ablations | 0cc2305b |
 
-Registered models: `secops-detector` v1 (alias `champion`, run c91b4a71) and
-`secops-family-classifier` v1 (alias `champion`, run 11a7c46d). Completion check on 2026-10-03:
+Registered models: `secops-detector` v1 (alias `champion`, run dcc36c43) and
+`secops-family-classifier` v1 (alias `champion`, run 79e4b102). Completion check on 2026-10-03:
 both reload through `registry.load_model` and reproduce their logged test PR-AUC (0.99993086) and
-test macro-F1 (0.961933) to 1e-6.
+test macro-F1 (0.961262) to 1e-6, and the champion's artifacts resolve under
+`$SECOPS_DATA_DIR/mlflow/artifacts/`.

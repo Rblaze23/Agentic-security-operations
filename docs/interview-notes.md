@@ -63,8 +63,9 @@ Three levers were compared in MLflow: no weighting, balanced sample weights, and
 on validation. For the binary task weighting changed nothing measurable (all tree runs tie on
 validation PR-AUC within 0.000002); threshold tuning is what sets the operating point. The
 champion is the unweighted LightGBM, chosen by the tie rule "simpler model wins". For the family
-task, weighting also did not help: the unweighted LightGBM has the best validation macro-F1
-(0.9998) and balanced weights lowered it for both libraries. Resampling (SMOTE and friends) was rejected: it invents flow
+task, weighting cut both ways: balanced weights raised XGBoost's validation macro-F1 (0.9946 to
+0.9991) and lowered LightGBM's (0.9996 to 0.9905); the two best runs tie inside the 0.0005 band and
+the simpler model, unweighted LightGBM, is the champion. Resampling (SMOTE and friends) was rejected: it invents flow
 rows that no network produced.
 
 **How did you prevent data leakage?**
