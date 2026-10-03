@@ -1,0 +1,11 @@
+# Ablation: champion binary config + Dst Port as a feature (one variable changed).
+experiment: secops/detection-ablations
+run_name: lightgbm_none_withport
+task: binary
+model: lightgbm
+weighting: none
+feature_spec: v1-withport
+split_strategy: chrono_within_group
+attempted_policy: relabel_benign
+max_fpr: 0.01
+shap_sample: 20000

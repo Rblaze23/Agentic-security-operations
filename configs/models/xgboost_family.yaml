@@ -1,0 +1,9 @@
+experiment: secops/detection-family
+run_name: xgboost_family_balanced
+task: multiclass
+model: xgboost
+weighting: balanced
+feature_spec: v1-noport
+split_strategy: chrono_within_group
+attempted_policy: relabel_benign
+shap_sample: 20000

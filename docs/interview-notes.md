@@ -1,0 +1,131 @@
+# Interview notes
+
+Short answers to the questions this project is likely to raise, written as each phase lands.
+Numbers come from MLflow runs or build reports; `TBD` means not measured yet.
+
+## Phase 1 — ML detection foundation
+
+**Why PR-AUC instead of accuracy?**
+After deduplication 16.5% of flows are attacks, so a model that says "benign" to everything scores
+83.5% accuracy. PR-AUC summarises precision and recall over all thresholds on the positive class
+only, so it moves when the detector's ranking of attacks changes and ignores the easy negatives.
+ROC-AUC is reported too, but on this data it saturates at 1.0 for every tree model, which is why it
+cannot be the headline either.
+
+**What is the most important Phase 1 result?**
+That the in-distribution score does not transfer. On the chronological split every tree model
+reaches 0.9999 PR-AUC; on held-out Friday the same model catches 6% of the unseen botnet traffic
+and would catch 1.3% of all Friday attacks at a 0.5 threshold. A flow-level detector is a signal
+generator; turning a signal into a triage decision needs burst counts, asset context, known-bad
+addresses and vulnerability data, which is exactly what the agent and its tools are for. The ML
+result motivates the agent instead of decorating it.
+
+**Why does the false-positive rate, not F1, choose the operating point?**
+In a security operations centre the scarce resource is analyst time, and every false positive costs
+some of it. The threshold is therefore the one that maximises recall subject to a validation FPR
+of at most 1%. The maximum-F1 threshold is logged alongside for comparison (0.322 for the champion
+versus 0.0002 for the FPR rule); on this data the two rules pick very different operating points
+because the probability distribution is almost perfectly bimodal.
+
+**Why is the champion's threshold 0.0002?**
+Because the LightGBM scores are extremely bimodal: nearly every benign flow scores below 0.0002 and
+nearly every attack above it. The rule "highest recall with FPR ≤ 1% on validation" keeps walking
+the threshold down as long as the FPR budget holds, and it holds almost all the way to zero. A
+tiny threshold is not a bug; it is what the measured validation curve says. It also signals that
+the chronological within-group split is an easy test (see the next answer).
+
+**Are the numbers too good to be true?**
+Test PR-AUC is 0.9999 for every tree model and 0.993 for logistic regression on the primary split.
+Two facts explain it and both are documented rather than hidden. First, the primary split is
+chronological *within* each (day, label) group, so the model has already seen the first 70% of
+every attack burst and is asked about the last 15%: that is the "we have seen the start of the
+campaign" setting, and flows inside one tool's burst are near-identical. Second, the testbed is one
+network for one week. The honest generalisation number is the held-out-Friday experiment, where
+Botnet and DDoS are never seen in training: Friday PR-AUC 0.9991 and recall 99.3%, but **Botnet
+recall 6%**, Brier score 0.206, and at a conventional 0.5 threshold Friday recall would be 1.3%. The
+DDoS flood is caught only because the deployed threshold is tiny. That table, not the 0.9999, is
+the number to quote.
+
+**Why LightGBM and XGBoost rather than a neural network?**
+Tabular, 82 numeric features, 1.2 M rows, NaNs, and a need for per-prediction explanations. Gradient
+boosting is the strong default for that shape of data, trains in two to three minutes on a laptop,
+handles NaN natively, and comes with exact SHAP values through TreeExplainer. Nothing in the
+measured results suggests headroom a deep model would fill.
+
+**Why keep logistic regression?**
+It is the honest floor and the model that shows what the trees add. It reaches 0.993 PR-AUC but its
+per-label recall collapses on the minority behaviours: 3% on Botnet, 0% on Infiltration and SQL
+injection, 32% on Slowhttptest. The trees recover all of those (lowest champion per-label recall is
+95.5% on SSH-Patator). That table is the argument for non-linear models in one glance.
+
+**How did you handle class imbalance, and did it matter?**
+Three levers were compared in MLflow: no weighting, balanced sample weights, and threshold tuning
+on validation. For the binary task weighting changed nothing measurable (all tree runs tie on
+validation PR-AUC within 0.000002); threshold tuning is what sets the operating point. The
+champion is the unweighted LightGBM, chosen by the tie rule "simpler model wins". For the family
+task, weighting cut both ways: balanced weights raised XGBoost's validation macro-F1 (0.9946 to
+0.9991) and lowered LightGBM's (0.9996 to 0.9905); the two best runs tie inside the 0.0005 band and
+the simpler model, unweighted LightGBM, is the champion. Resampling (SMOTE and friends) was rejected: it invents flow
+rows that no network produced.
+
+**How did you prevent data leakage?**
+Identifier columns (IPs, ports, flow id, timestamp, row id) are never features; `Dst Port` is a
+documented ablation because attacks hit five known ports in this testbed. Exact duplicate rows are
+removed before splitting (385,020 rows, 18.3%; port-scan probes are 98.9% duplicates once the port
+is dropped). Splits are chronological inside each (day, label) group and a leak check in the build
+raises if any validation or test flow precedes a training flow. Imputer and scaler live inside the
+sklearn pipeline, fitted on train only. The threshold is chosen on validation and test is scored
+once. The remaining optimism source, validation used both for early stopping and for the
+threshold, is stated in the docs.
+
+**Why the corrected DistriNet dataset instead of the official CIC files?**
+The original flow extractor split TCP flows on the first FIN, ignored RST, mis-counted flags and
+leaked absolute timestamps into the Active/Idle features; the original labels were assigned by time
+window and included startup traffic, mis-timed attacks and an entire infiltration-phase port scan
+labelled benign. The DistriNet group fixed the extractor, published per-attack labelling rules and
+added "Attempted" sub-labels for attacker flows with no malicious payload. Using their files and
+following their one hard rule (never train on "Attempted" as a class) is auditable; our own
+preprocessing is documented separately so the three layers never blur.
+
+**What is an "Attempted" flow and what did you do with it?**
+An attacker-generated flow that carried no malicious payload: a closed port, startup or teardown,
+an unresponsive target, a mis-implemented attack. The authors forbid using it as a class and
+recommend relabelling it benign; that is the default policy. Dropping those rows instead changes
+PR-AUC by less than 0.0001; the different false-positive counts between the two runs come from
+where the FPR rule placed the threshold, and only 7 of the champion's 963 false positives are
+relabelled Attempted flows.
+
+**What happens to the port-scan class after deduplication?**
+230,833 port-scan flows become 7,810 unique feature vectors because a scan is the same SYN probe
+sent to thousands of ports and the port is not a feature. The detector therefore learns the shape
+of a probe, not the volume of a scan. Volume is exactly the context the Phase 3 event store and
+tools will add for the agent.
+
+**Why MLflow?**
+Fifteen runs on identical data had to be compared, any of them reproduced, and one handed to an API
+by name. MLflow does that from a SQLite file locally and from a server later; registry aliases
+(`secops-detector@champion`) are the promotion mechanism Phase 2 and Phase 6 build on. Every run
+carries the manifest hash and git commit as tags, so a number in the README traces back to bytes
+and code.
+
+**How would you retrain or roll back the detector?**
+Train a new run, let `secops-train promote-best` move the `champion` alias; the API loads by alias,
+so a rollback is moving the alias back. Nothing in the serving path references a file path.
+
+**How would you detect drift?**
+Future work, but the design is in place: the champion's top SHAP features (Bwd Packet Length Std,
+Packet Length Std, Bwd Init Win Bytes, Bwd Packet Length Mean) are the first candidates for a
+population-stability check on incoming flows, and the alert rate against the fixed threshold is the
+cheapest canary.
+
+**What does the port ablation show?**
+Adding `Dst Port` cuts missed attacks on the test split from 31 to 3 and lifts PR-AUC to 1.0000.
+In this testbed attacks hit five ports, so the port is a shortcut that would not survive another
+network; the gain is the reason it stays out of the feature set. Port reasoning belongs to the
+agent's tools, where the evidence can be cited.
+
+**Which features drive the detector?**
+By mean |SHAP| on 20,000 validation flows: Bwd Packet Length Std dominates (2.69), then Packet
+Length Std (0.67), Bwd Init Win Bytes (0.61), Bwd Packet Length Mean (0.57), Total Length of Bwd
+Packet (0.28). The response-side packet statistics carry the signal: DoS tools and brute-force
+tools elicit very regular replies.

@@ -1,0 +1,6 @@
+# Documentation of the build defaults; the secops-data CLI flags are the source of truth.
+attempted_policy: relabel_benign
+train_frac: 0.70
+val_frac: 0.15
+heldout_test_day: friday
+max_fpr: 0.01
