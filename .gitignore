@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+.env
+mlruns/
+mlartifacts/
+data/raw/
+data/processed/
+*.parquet
+*.zip
+.superpowers/
