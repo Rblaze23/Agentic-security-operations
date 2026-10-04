@@ -1,0 +1,119 @@
+{
+  "alert_id": "ad1fc0e4a8a8407ab8927dfdf7c562f7",
+  "verdict": "true_positive",
+  "attack_family": "port_scan",
+  "severity": "low",
+  "confidence": 0.9,
+  "summary": "Internal host 192.168.10.8 (win-vista, a Windows Vista workstation on the victim LAN) is very likely scanning ports across the internal network. In the alerted flow it sent 2 SYN packets with no payload to 192.168.10.17 (ubuntu-14-64) on port 61770, and the target answered with 2 RSTs. That means the port was closed, and it also shows 192.168.10.8 started the connection, so the direction is not reversed. Within ±30 minutes, 192.168.10.8 made 10,058 flows to 496 hosts on 1,060 ports. In about 29 minutes it made 503 flows to 192.168.10.17 alone, across 336 ports. All 10 neighbouring flows I scored from this pair also alert as port_scan. Neither host is a known attacker, so a scan coming from a workstation points to the source being compromised. The scan most likely ended at the closed-port stage: nothing shows a service on the target answering.",
+  "findings": [
+    {
+      "kind": "observed",
+      "statement": "Anchor flow 3083227: 192.168.10.8:3031 -> 192.168.10.17:61770/TCP, duration 0.062 ms, 2 forward and 2 backward packets, 0 bytes in each direction, SYN count 2, RST count 2.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "Within ±30 minutes, 192.168.10.8 made 10,058 flows to 496 distinct IPs and 1,060 distinct ports. Top ports were 53, 443, 80, 135, 139 and 445.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "The pair 192.168.10.8 -> 192.168.10.17 had 503 flows (first seen 18:11:34, last seen 18:40:03) to 336 distinct destination ports, including 139, 445, 25627, 1, 61770 and 137. Total bytes were 29,340 forward and 37,320 backward.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "192.168.10.8 is win-vista (Windows Vista 64-bit workstation, medium criticality, victim_lan). 192.168.10.17 is ubuntu-14-64 (Ubuntu 14.04 workstation, medium criticality, victim_lan). Neither is flagged as a known attacker.",
+      "evidence_ids": [
+        "E2",
+        "E3"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "The detector scored the anchor at attack probability 0.9999, predicted family port_scan (0.99999). The main reasons were zero backward payload, very short Fwd IAT Min and 2 backward RST flags.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "All 10 sampled flows between the same pair scored above the threshold and were predicted as port_scan (probability ≥0.99986).",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "The SYN-forward / RST-backward pattern shows 192.168.10.8 started the connection and 192.168.10.17 refused it on a closed port. This is not a reversed-direction artifact. The pattern matches a TCP SYN/connect port scan.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "A workstation that is not a known attacker is scanning hundreds of internal hosts, which suggests it has been compromised and is being used for internal discovery (lateral reconnaissance).",
+      "evidence_ids": [
+        "E1",
+        "E2"
+      ]
+    }
+  ],
+  "attack_techniques": [
+    {
+      "technique_id": "T1046",
+      "name": "Network Service Discovery",
+      "evidence_ids": [
+        "E5",
+        "E1"
+      ]
+    }
+  ],
+  "cves": [],
+  "recommended_actions": [
+    {
+      "action": "Isolate 192.168.10.8 (win-vista) and do forensic triage to find how it was compromised: malicious downloads or documents, persistence, and the scanning tool.",
+      "evidence_ids": [
+        "E1",
+        "E2"
+      ]
+    },
+    {
+      "action": "Look for follow-up connections from 192.168.10.8 to ports it scanned that turned out to be open, especially SMB/NetBIOS (139, 445) on internal hosts, and check for successful sessions or lateral movement.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "action": "Review outbound traffic from 192.168.10.8 (heavy 443/53/80 use) for command-and-control activity.",
+      "evidence_ids": [
+        "E1"
+      ]
+    }
+  ],
+  "uncertainties": [
+    "The predict_attack output was cut off after the first few predictions. The summary still says all 10 flows were above the threshold.",
+    "Packet payloads are not available, so the scanning tool cannot be identified.",
+    "I did not check whether any scanned port on 192.168.10.17 or other hosts answered with a real service. Whether the scan found open services, and so whether it achieved anything, is unconfirmed."
+  ],
+  "model_prediction": {
+    "attack_probability": 0.9998979008259248,
+    "threshold": 0.0002419239107545048,
+    "predicted_family": "port_scan",
+    "model_name": "secops-detector",
+    "model_version": 1
+  },
+  "investigation_steps": [
+    "get_related_events({\"event_id\": 3083227, \"window_minutes\": 30}) -> E1 [ok]",
+    "enrich_ip({\"ip\": \"192.168.10.8\"}) -> E2 [ok]",
+    "enrich_ip({\"ip\": \"192.168.10.17\"}) -> E3 [ok]",
+    "predict_attack({\"event_ids\": [3151600, 3323404, 3204234, 3114345, 3114784, 3239055, 3229816, 3134725, 3153979, 3123909]}) -> E4 [ok]",
+    "lookup_attack_technique({\"technique_id\": \"T1046\"}) -> E5 [ok]"
+  ]
+}

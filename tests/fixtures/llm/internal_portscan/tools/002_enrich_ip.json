@@ -1,0 +1,26 @@
+{
+  "key": "f116788545c287d3a1e4231f6c7becf21dce5f0bf72cf8b584ae418055428b70",
+  "tool": "enrich_ip",
+  "arguments": {
+    "ip": "192.168.10.8"
+  },
+  "output": {
+    "ip": "192.168.10.8",
+    "is_private": true,
+    "zone": "victim_lan",
+    "known_attacker": false,
+    "attacker_notes": null,
+    "asset": {
+      "ip": "192.168.10.8",
+      "hostname": "win-vista",
+      "role": "Workstation",
+      "os": "Windows Vista 64-bit",
+      "services": [],
+      "criticality": "medium",
+      "zone": "victim_lan",
+      "public_ip": null,
+      "notes": null
+    },
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

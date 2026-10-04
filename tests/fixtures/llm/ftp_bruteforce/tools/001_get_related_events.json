@@ -1,0 +1,185 @@
+{
+  "key": "3b487a7ddb5b625a6a2a53edb5ed157830060e78e0ff39fc16dd6fd59f2568fa",
+  "tool": "get_related_events",
+  "arguments": {
+    "event_id": 1110604,
+    "window_minutes": 30
+  },
+  "output": {
+    "status": "found",
+    "anchor": {
+      "event_id": 1110604,
+      "timestamp": "2017-07-04T13:12:28.358921Z",
+      "source_ip": "172.16.0.1",
+      "source_port": 59104,
+      "destination_ip": "192.168.10.50",
+      "destination_port": 21,
+      "protocol": 6,
+      "duration_ms": 8670.4,
+      "fwd_packets": 11,
+      "bwd_packets": 17,
+      "fwd_bytes": 116,
+      "bwd_bytes": 188,
+      "syn_count": 2,
+      "fin_count": 2,
+      "rst_count": 2
+    },
+    "window_minutes": 30,
+    "same_source": {
+      "count": 2469,
+      "distinct_destination_ips": 1,
+      "distinct_destination_ports": 2,
+      "top_destination_ports": [
+        {
+          "port": 21,
+          "count": 2468
+        },
+        {
+          "port": 80,
+          "count": 1
+        }
+      ],
+      "total_fwd_bytes": 296238,
+      "total_bwd_bytes": 463704,
+      "first_seen": "2017-07-04T12:42:29.226397Z",
+      "last_seen": "2017-07-04T13:30:03.492800Z",
+      "sample_event_ids": [
+        1267230,
+        1298193,
+        1288661,
+        1136011,
+        1171744,
+        1205191,
+        1266908,
+        1261648,
+        1279922,
+        1133081,
+        1177838,
+        1200915,
+        1205699,
+        1220190,
+        1277515,
+        1130250,
+        1189080,
+        1217432,
+        1282381,
+        1313715
+      ]
+    },
+    "same_destination": {
+      "count": 2725,
+      "distinct_destination_ips": 1,
+      "distinct_destination_ports": 36,
+      "top_destination_ports": [
+        {
+          "port": 21,
+          "count": 2500
+        },
+        {
+          "port": 22,
+          "count": 148
+        },
+        {
+          "port": 139,
+          "count": 44
+        },
+        {
+          "port": 80,
+          "count": 1
+        },
+        {
+          "port": 8639,
+          "count": 1
+        },
+        {
+          "port": 8740,
+          "count": 1
+        },
+        {
+          "port": 10702,
+          "count": 1
+        },
+        {
+          "port": 11597,
+          "count": 1
+        },
+        {
+          "port": 12521,
+          "count": 1
+        },
+        {
+          "port": 13053,
+          "count": 1
+        }
+      ],
+      "total_fwd_bytes": 1399238,
+      "total_bwd_bytes": 1547134,
+      "first_seen": "2017-07-04T12:42:29.226397Z",
+      "last_seen": "2017-07-04T13:42:20.635003Z",
+      "sample_event_ids": [
+        1267230,
+        1298193,
+        1288661,
+        1136011,
+        1171744,
+        1205191,
+        1266908,
+        1261648,
+        1110571,
+        1279922,
+        1255838,
+        1133081,
+        1177838,
+        1200915,
+        1205699,
+        1220190,
+        1277515,
+        1130250,
+        1189080,
+        1217432
+      ]
+    },
+    "same_pair": {
+      "count": 2469,
+      "distinct_destination_ips": 1,
+      "distinct_destination_ports": 2,
+      "top_destination_ports": [
+        {
+          "port": 21,
+          "count": 2468
+        },
+        {
+          "port": 80,
+          "count": 1
+        }
+      ],
+      "total_fwd_bytes": 296238,
+      "total_bwd_bytes": 463704,
+      "first_seen": "2017-07-04T12:42:29.226397Z",
+      "last_seen": "2017-07-04T13:30:03.492800Z",
+      "sample_event_ids": [
+        1267230,
+        1298193,
+        1288661,
+        1136011,
+        1171744,
+        1205191,
+        1266908,
+        1261648,
+        1279922,
+        1133081,
+        1177838,
+        1200915,
+        1205699,
+        1220190,
+        1277515,
+        1130250,
+        1189080,
+        1217432,
+        1282381,
+        1313715
+      ]
+    },
+    "source": "event_store"
+  }
+}

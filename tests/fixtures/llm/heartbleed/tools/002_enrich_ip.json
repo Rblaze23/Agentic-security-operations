@@ -1,0 +1,16 @@
+{
+  "key": "bdd2535da9bce0dab7fad50a63e3fe8abc908a9e32610f1189c67004508696a8",
+  "tool": "enrich_ip",
+  "arguments": {
+    "ip": "172.16.0.1"
+  },
+  "output": {
+    "ip": "172.16.0.1",
+    "is_private": true,
+    "zone": "firewall",
+    "known_attacker": true,
+    "attacker_notes": "Firewall inside address. In the flow records, traffic from the external attackers appears with this source address (NAT), so flows from 172.16.0.1 to the victim LAN are attacker traffic entering through the firewall, not the firewall acting on its own.",
+    "asset": null,
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

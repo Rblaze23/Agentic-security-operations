@@ -1,0 +1,32 @@
+{
+  "key": "b6783245b8ac84f5dfbea62ac278b8b522e7c89cf25a74615b5f81b698911e42",
+  "tool": "lookup_cve",
+  "arguments": {
+    "cve_id": "CVE-2014-0160",
+    "keyword": null,
+    "max_results": 5
+  },
+  "output": {
+    "status": "found",
+    "records": [
+      {
+        "cve_id": "CVE-2014-0160",
+        "published": "2014-04-07T22:55:03.893000Z",
+        "last_modified": "2026-06-17T00:02:24.467000Z",
+        "cvss_v3_score": 7.5,
+        "cvss_v3_severity": "HIGH",
+        "description": "The (1) TLS and (2) DTLS implementations in OpenSSL 1.0.1 before 1.0.1g do not properly handle Heartbeat Extension packets, which allows remote attackers to obtain sensitive information from process memory via crafted packets that trigger a buffer over-read, as demonstrated by reading private keys, related to d1_both.c and t1_lib.c, aka the Heartbleed bug.",
+        "references": [
+          "http://advisories.mageia.org/MGASA-2014-0165.html",
+          "http://blog.fox-it.com/2014/04/08/openssl-heartbleed-bug-live-blog/",
+          "http://cogentdatahub.com/ReleaseNotes.html",
+          "http://download.schneider-electric.com/files?p_Doc_Ref=SEVD%202014-119-01",
+          "http://git.openssl.org/gitweb/?p=openssl.git%3Ba=commit%3Bh=96db9023b881d7cd9f379b0c154650d6c108e9a3"
+        ],
+        "untrusted_text": true
+      }
+    ],
+    "cached": true,
+    "source": "nvd"
+  }
+}

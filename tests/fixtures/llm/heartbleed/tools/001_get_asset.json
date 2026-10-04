@@ -1,0 +1,24 @@
+{
+  "key": "c90a5ffaf1a45e2027499543e253d4ab0e1acf1d23222cd7ed57de6a2fc4e693",
+  "tool": "get_asset",
+  "arguments": {
+    "ip": "192.168.10.51"
+  },
+  "output": {
+    "status": "found",
+    "asset": {
+      "ip": "192.168.10.51",
+      "hostname": "ubuntu-server-12",
+      "role": "Server",
+      "os": "Ubuntu 12.04",
+      "services": [
+        "OpenSSL service on port 444"
+      ],
+      "criticality": "high",
+      "zone": "victim_lan",
+      "public_ip": "205.174.165.66",
+      "notes": "Schedule lists Heartbleed against port 444 on this host"
+    },
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

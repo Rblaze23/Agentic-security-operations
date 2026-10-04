@@ -1,0 +1,88 @@
+{
+ "request_hash": "659e65ffc70484e26758ffe191e219a4aa5dc473e2fbc2443d79b97636c9d3c0",
+ "model": "claude-opus-5-5",
+ "captured_at": "2026-10-04T01:12:56.435384+00:00",
+ "request": {
+  "model": "claude-opus-5-5",
+  "max_tokens": 16000,
+  "system": [
+   {
+    "type": "text",
+    "text": "You are the planning step of a defensive security triage system. You receive one network alert\nraised by a machine-learning detector on a single flow record, plus the list of read-only tools an\ninvestigator can call. Produce 2 to 6 short, concrete investigation questions that the tools can\nanswer, ordered by how much they would change the triage decision. Typical questions: whether the\nsource produced a burst of flows to many ports or hosts around the alert time; what the destination\nasset is and how critical it is; whether the source is a known attacker or an internal host; whether\na vulnerability or an ATT&CK technique matches the observed pattern; whether neighbouring flows\nalso score as attacks. Do not answer the questions yourself. Respond only with the JSON object.",
+    "cache_control": {
+     "type": "ephemeral"
+    }
+   }
+  ],
+  "messages": [
+   {
+    "role": "user",
+    "content": "{\"alert\": {\"alert_id\": \"ef54c1e922c7403db163f7f82e703684\", \"event_id\": \"1110604\", \"metadata\": {\"timestamp\": \"2017-07-04T13:12:28.358921Z\", \"source_ip\": \"172.16.0.1\", \"destination_ip\": \"192.168.10.50\", \"source_port\": 59104, \"destination_port\": 21, \"protocol\": 6}, \"detector\": {\"attack_probability\": 0.9999381987009204, \"threshold\": 0.0002419239107545048, \"predicted_family\": \"brute_force\", \"family_probabilities\": {\"botnet\": 1.4044125349489889e-08, \"brute_force\": 0.9999977670302541, \"ddos\": 8.771650090026991e-07, \"dos\": 1.238345893965813e-06, \"port_scan\": 9.788923926438794e-08, \"web_attack\": 5.525478248161831e-09}, \"top_contributions\": [{\"feature\": \"Bwd Packet Length Mean\", \"value\": 11.058823585510254, \"shap_value\": 4.491684989709769}, {\"feature\": \"Bwd RST Flags\", \"value\": 2.0, \"shap_value\": 4.118474079009241}, {\"feature\": \"Fwd IAT Min\", \"value\": 3.0, \"shap_value\": 2.182548202769925}, {\"feature\": \"Bwd Segment Size Avg\", \"value\": 11.058823585510254, \"shap_value\": 1.2142953762737734}, {\"feature\": \"SYN Flag Count\", \"value\": 2.0, \"shap_value\": 0.946384506590917}], \"model\": \"secops-detector v1\"}}, \"tools\": [{\"name\": \"search_events\", \"description\": \"Search network flow records in the event store within a time window of at most 24 hours, optionally filtered by source IP, destination IP, destination port and protocol.\"}, {\"name\": \"get_related_events\", \"description\": \"Aggregate the flows around one event (by event_id) within \\u00b1window_minutes (max 30): counts, distinct destinations and ports, top ports, byte totals and sample event ids for flows from the same source, to the same destination, and for the same source-destination pair.\"}, {\"name\": \"get_asset\", \"description\": \"Look up a host in the asset inventory by IP address: hostname, role, OS, known services, criticality, network zone.\"}, {\"name\": \"enrich_ip\", \"description\": \"Enrich an IP address: private or public, network zone (victim LAN, firewall, external attacker range), whether it is a known attacker address with notes, and the asset record if any.\"}, {\"name\": \"lookup_attack_technique\", \"description\": \"Look up MITRE ATT&CK enterprise techniques by exact id (e.g.\"}, {\"name\": \"lookup_cve\", \"description\": \"Look up vulnerabilities in the NVD (NIST) by exact CVE id or by keyword (at most 5 results): CVSS v3 score and severity, publication dates, a truncated description and up to 5 reference URLs.\"}, {\"name\": \"predict_attack\", \"description\": \"Score flows with the production intrusion detector: attack probability, the operating threshold, whether each flow would alert, the predicted attack family for alerts, and the top SHAP feature contributions.\"}]}"
+   }
+  ],
+  "output_config": {
+   "effort": "medium",
+   "format": {
+    "type": "json_schema",
+    "schema": {
+     "additionalProperties": false,
+     "properties": {
+      "questions": {
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "title": "Questions",
+       "type": "array"
+      },
+      "rationale": {
+       "title": "Rationale",
+       "type": "string"
+      }
+     },
+     "required": [
+      "questions",
+      "rationale"
+     ],
+     "title": "Plan",
+     "type": "object"
+    }
+   }
+  }
+ },
+ "response": {
+  "id": "msg_011CfgJsAQBpnT45rgZeBMDx",
+  "container": null,
+  "content": [
+   {
+    "citations": null,
+    "text": "{\"questions\":[\"How many flows did 172.16.0.1 send to 192.168.10.50 on port 21 within \u00b130 minutes of event 1110604, and do they show a high-rate pattern of short connections ending in resets that fits repeated login attempts?\",\"What is 192.168.10.50 in the asset inventory (hostname, role, OS, whether it runs an FTP service) and how critical is it?\",\"Is 172.16.0.1 a known attacker address or a firewall/NAT gateway, and which network zone does it belong to?\",\"Do neighbouring flows from 172.16.0.1 to 192.168.10.50:21 also score above the detector threshold as brute_force?\",\"Did 172.16.0.1 also contact other ports or hosts around the alert time (for example SSH on 22), which would point to a wider credential-guessing or scanning campaign?\",\"Does MITRE ATT&CK T1110 (Brute Force) match the observed pattern, and are there known FTP vulnerabilities for the service that the asset record identifies?\"],\"rationale\":\"The detector flags an FTP (port 21) flow as brute_force with very high confidence, driven by small backward packets and RST flags. The most decisive check is whether this is one of many repeated short sessions on the same source-destination pair, which would confirm password guessing. Next come how critical the target is and whether it actually runs FTP, then the reputation of the source. 172.16.0.1 may be a firewall or NAT address that masks an external attacker. Rescoring neighbouring flows, checking how broad the source's activity is, and mapping to ATT&CK or a CVE would support scoping and the write-up.\"}",
+    "type": "text"
+   }
+  ],
+  "diagnostics": null,
+  "model": "claude-opus-5-5",
+  "role": "assistant",
+  "stop_details": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1564,
+   "output_tokens": 540,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": null,
+   "service_tier": "standard"
+  },
+  "_request_id": "req_011CfgJs9EVXSzxvW5khboeT"
+ }
+}

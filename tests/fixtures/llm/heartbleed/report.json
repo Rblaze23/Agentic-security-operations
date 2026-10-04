@@ -1,0 +1,128 @@
+{
+  "alert_id": "69fbcd18181d4acba3610e38c7b7fbe6",
+  "verdict": "needs_human_review",
+  "attack_family": "heartbleed (detector family: web_attack)",
+  "severity": "high",
+  "confidence": 0.0,
+  "summary": "This alert is a true positive. It shows a Heartbleed-style exploit of the OpenSSL service on TCP 444 of ubuntu-server-12 (192.168.10.51), a high-criticality server. The traffic arrived from 172.16.0.1, the firewall's inside (NAT) address that external attacker traffic appears under. The anchor flow is one piece of a single long TLS session (source port 45022). It lasted about 119 seconds, with about 7.9 KB sent by the attacker and about 7.9 MB returned by the server. Across all related flows the server returned about 72 MB. That lopsided pattern of small requests and large replies matches CVE-2014-0160 memory leaks. Most neighbouring flows also alert. The detector calls this web_attack, but the evidence fits Heartbleed better.",
+  "findings": [
+    {
+      "kind": "observed",
+      "statement": "192.168.10.51 is ubuntu-server-12 (Ubuntu 12.04), a high-criticality server in the victim LAN that runs an OpenSSL service on port 444. Its asset notes say Heartbleed is scheduled against port 444 on this host.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "172.16.0.1 is the firewall's inside address and is flagged as a known attacker: external attacker traffic shows up with this source address because of NAT.",
+      "evidence_ids": [
+        "E2"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "Within ±30 minutes, 172.16.0.1 sent 19 other flows, all to 192.168.10.51 (14 to port 444, 3 to port 80, 1 to 443, 1 to port 0). Together they carried 81,517 bytes forward and 72,222,411 bytes back. The anchor flow lasted about 119 s, with 7,920 bytes forward and 7,883,880 bytes back.",
+      "evidence_ids": [
+        "E3"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "The search found 15 flows from 172.16.0.1 to port 444 between 18:09:50 and 18:32:18 on 2017-07-05; only some are visible because the output was cut off. The visible ones include four short connections at 18:09–18:10 (about 5 s each, with resets) and eight flows from 18:12:15 to 18:24:17 on source port 45022. Each of those eight lasted about 119 s and carried about 7.9–8.3 KB forward and 7.5–7.9 MB back. All visible flows went to 192.168.10.51.",
+      "evidence_ids": [
+        "E7"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "The detector gives the anchor flow an attack probability of 0.71 (threshold 0.00024) and family web_attack. The strongest contributing feature was Bwd Packet Length Std. Of the 19 neighbouring flows, 18 score above the threshold. The long port-444 flows that are visible are classed web_attack with probability above 0.97. Two flows were tiny and are classed port_scan.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "CVE-2014-0160 (Heartbleed, CVSS 7.5 HIGH) is a bug in OpenSSL 1.0.1 before 1.0.1g. Crafted heartbeat packets make the server read past a buffer and leak process memory.",
+      "evidence_ids": [
+        "E5"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "Small repeated requests getting multi-megabyte replies over a single persistent TLS session, aimed at a known-vulnerable OpenSSL service, is the pattern of Heartbleed memory exfiltration. The web_attack label is the model's closest family, not an exact match. The roughly 72 MB returned suggests the exploit worked and server memory leaked out.",
+      "evidence_ids": [
+        "E1",
+        "E3",
+        "E5",
+        "E7"
+      ]
+    }
+  ],
+  "attack_techniques": [
+    {
+      "technique_id": "T1190",
+      "name": "Exploit Public-Facing Application",
+      "evidence_ids": [
+        "E6",
+        "E1",
+        "E7"
+      ]
+    }
+  ],
+  "cves": [
+    {
+      "cve_id": "CVE-2014-0160",
+      "evidence_ids": [
+        "E5",
+        "E1"
+      ]
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Isolate ubuntu-server-12, or block external access to TCP 444, and patch OpenSSL to 1.0.1g or later.",
+      "evidence_ids": [
+        "E1",
+        "E5",
+        "E7"
+      ]
+    },
+    {
+      "action": "Assume the service's memory was exposed: revoke and reissue the TLS private keys and certificates, and rotate any session tokens or credentials the service handled.",
+      "evidence_ids": [
+        "E3",
+        "E5"
+      ]
+    },
+    {
+      "action": "Pull the firewall/NAT logs for 18:08–18:33 on 2017-07-05 to find the real external source behind 172.16.0.1, then block it.",
+      "evidence_ids": [
+        "E2",
+        "E3"
+      ]
+    }
+  ],
+  "uncertainties": [
+    "There is no payload data, so I could not directly confirm heartbeat records or what leaked. The Heartbleed conclusion rests on flow shape, the asset notes and the service version.",
+    "The predict_attack and search_events outputs were both cut off. I could not see the score of every neighbouring flow, or the details of every port-444 flow after 18:24.",
+    "I only checked other internal hosts on port 444 from this source. I did not check whether other hosts received web-port traffic from it.",
+    "critic: The finding says all visible flows went to 192.168.10.51 and that the eight flows on source port 45022 each lasted about 119 s and carried about 7.9–8.3 KB forward and 7.5–7.9 MB back. The visible data is cut off after the ninth port-45022 flow, so the claim of eight such flows ending at 18:24:17 is supported, but the finding also states that four short connections show resets. In the data, only the rst_count of 1 is shown, which does support this. Also, the finding says 15 flows were found, which matches. No contradiction is found for this item."
+  ],
+  "model_prediction": {
+    "attack_probability": 0.71258445910575,
+    "threshold": 0.0002419239107545048,
+    "predicted_family": "web_attack",
+    "model_name": "secops-detector",
+    "model_version": 1
+  },
+  "investigation_steps": [
+    "get_asset({\"ip\": \"192.168.10.51\"}) -> E1 [ok]",
+    "enrich_ip({\"ip\": \"172.16.0.1\"}) -> E2 [ok]",
+    "get_related_events({\"event_id\": 2251110, \"window_minutes\": 30}) -> E3 [ok]",
+    "predict_attack({\"event_ids\": [2241813, 2241814, 2244353, 2245207, 2246402, 2247345, 2248443, 2248767, 2249516, 2249898, 2250775, 2283045, 2299641, 2345656, 2394377, 2412850, 2435520, 2468411, 2490921]}) -> E4 [ok]",
+    "lookup_cve({\"cve_id\": \"CVE-2014-0160\"}) -> E5 [ok]",
+    "lookup_attack_technique({\"technique_id\": \"T1190\"}) -> E6 [ok]",
+    "search_events({\"start\": \"2017-07-05T18:00:00Z\", \"end\": \"2017-07-05T19:00:00Z\", \"source_ip\": \"172.16.0.1\", \"destination_port\": 444}) -> E7 [ok]"
+  ]
+}

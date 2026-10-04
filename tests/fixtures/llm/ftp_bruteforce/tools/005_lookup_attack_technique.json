@@ -1,0 +1,40 @@
+{
+  "key": "1973b37936b36dcfba03e6e765d5076c9a65dfef26fe06cb13f8007e5121553a",
+  "tool": "lookup_attack_technique",
+  "arguments": {
+    "technique_id": "T1110.001",
+    "keyword": null,
+    "max_results": 5
+  },
+  "output": {
+    "status": "found",
+    "techniques": [
+      {
+        "technique_id": "T1110.001",
+        "name": "Password Guessing",
+        "tactics": [
+          "credential-access"
+        ],
+        "description": "Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts. Without knowledge of the password for an account, an adversary may opt to systematically guess the password using a repetitive or iterative mechanism. An adversary may guess login credentials without prior knowledge of system or environment passwords during an operation by using a list of common passwords. Password guessing may or may not take into account the target's policies on password complexity or use policies that may lock accounts out after a number of failed attempts. Guessing passwords can be a risky option because it could cause numerous authentication failures and account lockouts, depending on the organization's login failure policies. (Citation: Cylance Cleaver) Typically, management services over commonly used ports are used when guessing passwords. Commonly targeted services include the following: * SSH (22/TCP) * Telnet (23/\u2026",
+        "platforms": [
+          "Containers",
+          "ESXi",
+          "IaaS",
+          "Identity Provider",
+          "Linux",
+          "macOS",
+          "Network Devices",
+          "Office Suite",
+          "SaaS",
+          "Windows"
+        ],
+        "url": "https://attack.mitre.org/techniques/T1110/001",
+        "version": "1.7",
+        "is_subtechnique": true,
+        "untrusted_text": true
+      }
+    ],
+    "attack_version": "19.2",
+    "source": "mitre-attack"
+  }
+}

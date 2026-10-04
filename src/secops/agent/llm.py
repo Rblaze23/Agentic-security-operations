@@ -69,8 +69,50 @@ def request_fingerprint(request: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(request, sort_keys=True, default=str).encode()).hexdigest()
 
 
+# Keywords the structured-output / strict-tool grammar rejects (observed 2026-10-04:
+# "For 'array' type, 'minItems' values other than 0 or 1 are not supported",
+# "For 'string' type, format 'ipvanyaddress' is not supported", and every object must set
+# additionalProperties: false). They are dropped from the schema sent to the API; Pydantic still
+# enforces them client-side, so a violation surfaces as a ValidationError, never silently.
+UNSUPPORTED_SCHEMA_KEYWORDS = frozenset(
+    {
+        "maxItems",
+        "minLength",
+        "maxLength",
+        "minimum",
+        "maximum",
+        "exclusiveMinimum",
+        "exclusiveMaximum",
+        "multipleOf",
+        "pattern",
+    }
+)
+SUPPORTED_FORMATS = frozenset({"date-time", "date", "time", "email", "uri", "uuid"})
+
+
+def sanitize_schema(node: Any) -> Any:
+    """A JSON schema the API's grammar accepts: constraints stripped, objects closed."""
+    if isinstance(node, dict):
+        out: dict[str, Any] = {}
+        for k, v in node.items():
+            if k in UNSUPPORTED_SCHEMA_KEYWORDS:
+                continue
+            if k == "minItems" and isinstance(v, int) and v > 1:
+                out[k] = 1
+                continue
+            if k == "format" and v not in SUPPORTED_FORMATS:
+                continue
+            out[k] = sanitize_schema(v)
+        if out.get("type") == "object" and "properties" in out:
+            out["additionalProperties"] = False
+        return out
+    if isinstance(node, list):
+        return [sanitize_schema(v) for v in node]
+    return node
+
+
 def _schema_for(model: type[BaseModel]) -> dict[str, Any]:
-    schema = model.model_json_schema()
+    schema: dict[str, Any] = sanitize_schema(model.model_json_schema())
     schema.setdefault("additionalProperties", False)
     return schema
 

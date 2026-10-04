@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: secops-api:local
+    env_file: .env
+    environment:
+      SECOPS_MODEL_DIR: /models
+      SECOPS_PORT: "8000"
+    volumes:
+      - ${SECOPS_MODEL_DIR:-${HOME}/data/secops/models}:/models:ro
+    ports:
+      - "8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 20s

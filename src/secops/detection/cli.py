@@ -11,6 +11,7 @@ import pandas as pd
 import typer
 
 from secops.config import get_settings
+from secops.detection.bundle import export_bundle
 from secops.detection.registry import promote
 from secops.detection.selection import choose_champion
 from secops.detection.train import TrainConfig, run_training
@@ -100,4 +101,19 @@ def promote_best(
     typer.echo(
         f"{model_name} v{version} <- {choice.run_name} ({choice.run_id}) "
         f"{metric}={choice.metric_value:.6f}; {choice.reason}"
+    )
+
+
+@app.command()
+def export(
+    model_name: Annotated[str, typer.Option("--model-name", help="registered model name")],
+    out: Annotated[Path, typer.Option("--out", help="bundle directory to (re)create")],
+    alias: Annotated[str, typer.Option("--alias")] = "champion",
+) -> None:
+    """Write a self-contained serving bundle for a registry alias."""
+    mlflow.set_tracking_uri(get_settings().resolved_tracking_uri())
+    m = export_bundle(model_name, out, alias=alias)
+    typer.echo(
+        f"exported {m.model_name} v{m.version} ({m.alias}, run {m.run_id[:8]}, "
+        f"{m.model_kind}, spec {m.feature_spec_version}) -> {out}"
     )

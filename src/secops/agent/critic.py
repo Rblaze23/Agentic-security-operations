@@ -8,6 +8,7 @@ from typing import Any
 
 from secops.agent.llm import LLM, LLMRefusalError, LLMTruncatedError
 from secops.agent.prompts import load_prompt
+from secops.agent.tools import evidence_data
 from secops.schemas.agent import CriticIssue, CriticVerdict, DraftReport, Evidence
 
 INSTRUCTION_PATTERNS = re.compile(
@@ -127,6 +128,7 @@ def llm_check(llm: LLM, draft: DraftReport, evidence: dict[str, Evidence]) -> li
                         "evidence_id": eid,
                         "tool": evidence[eid].tool,
                         "summary": evidence[eid].summary,
+                        "data": evidence_data(evidence[eid]),
                     }
                     for eid in f.evidence_ids
                     if eid in evidence

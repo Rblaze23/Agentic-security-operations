@@ -1,0 +1,88 @@
+{
+ "request_hash": "59c231692191b8556d47df76a10d5e710b51d5ffdab355b983d46f6be319786d",
+ "model": "claude-opus-5-5",
+ "captured_at": "2026-10-04T01:15:08.739412+00:00",
+ "request": {
+  "model": "claude-opus-5-5",
+  "max_tokens": 16000,
+  "system": [
+   {
+    "type": "text",
+    "text": "You are the planning step of a defensive security triage system. You receive one network alert\nraised by a machine-learning detector on a single flow record, plus the list of read-only tools an\ninvestigator can call. Produce 2 to 6 short, concrete investigation questions that the tools can\nanswer, ordered by how much they would change the triage decision. Typical questions: whether the\nsource produced a burst of flows to many ports or hosts around the alert time; what the destination\nasset is and how critical it is; whether the source is a known attacker or an internal host; whether\na vulnerability or an ATT&CK technique matches the observed pattern; whether neighbouring flows\nalso score as attacks. Do not answer the questions yourself. Respond only with the JSON object.",
+    "cache_control": {
+     "type": "ephemeral"
+    }
+   }
+  ],
+  "messages": [
+   {
+    "role": "user",
+    "content": "{\"alert\": {\"alert_id\": \"69fbcd18181d4acba3610e38c7b7fbe6\", \"event_id\": \"2251110\", \"metadata\": {\"timestamp\": \"2017-07-05T18:30:17.987548Z\", \"source_ip\": \"172.16.0.1\", \"destination_ip\": \"192.168.10.51\", \"source_port\": 45022, \"destination_port\": 444, \"protocol\": 6}, \"detector\": {\"attack_probability\": 0.71258445910575, \"threshold\": 0.0002419239107545048, \"predicted_family\": \"web_attack\", \"family_probabilities\": {\"botnet\": 2.351098292384816e-13, \"brute_force\": 1.2230860867780496e-10, \"ddos\": 1.4728328713253636e-08, \"dos\": 2.0540843121889508e-08, \"port_scan\": 4.1371278382388877e-10, \"web_attack\": 0.9999999641945718}, \"top_contributions\": [{\"feature\": \"Bwd Packet Length Std\", \"value\": 2443.179443359375, \"shap_value\": 7.267527675390539}, {\"feature\": \"Bwd Init Win Bytes\", \"value\": 349.0, \"shap_value\": -3.7752531904047357}, {\"feature\": \"Packet Length Std\", \"value\": 2498.52001953125, \"shap_value\": 2.1465820048137165}, {\"feature\": \"Fwd Packet Length Max\", \"value\": 66.0, \"shap_value\": 1.3744090294982263}, {\"feature\": \"Fwd PSH Flags\", \"value\": 120.0, \"shap_value\": 1.219152383684743}], \"model\": \"secops-detector v1\"}}, \"tools\": [{\"name\": \"search_events\", \"description\": \"Search network flow records in the event store within a time window of at most 24 hours, optionally filtered by source IP, destination IP, destination port and protocol.\"}, {\"name\": \"get_related_events\", \"description\": \"Aggregate the flows around one event (by event_id) within \\u00b1window_minutes (max 30): counts, distinct destinations and ports, top ports, byte totals and sample event ids for flows from the same source, to the same destination, and for the same source-destination pair.\"}, {\"name\": \"get_asset\", \"description\": \"Look up a host in the asset inventory by IP address: hostname, role, OS, known services, criticality, network zone.\"}, {\"name\": \"enrich_ip\", \"description\": \"Enrich an IP address: private or public, network zone (victim LAN, firewall, external attacker range), whether it is a known attacker address with notes, and the asset record if any.\"}, {\"name\": \"lookup_attack_technique\", \"description\": \"Look up MITRE ATT&CK enterprise techniques by exact id (e.g.\"}, {\"name\": \"lookup_cve\", \"description\": \"Look up vulnerabilities in the NVD (NIST) by exact CVE id or by keyword (at most 5 results): CVSS v3 score and severity, publication dates, a truncated description and up to 5 reference URLs.\"}, {\"name\": \"predict_attack\", \"description\": \"Score flows with the production intrusion detector: attack probability, the operating threshold, whether each flow would alert, the predicted attack family for alerts, and the top SHAP feature contributions.\"}]}"
+   }
+  ],
+  "output_config": {
+   "effort": "medium",
+   "format": {
+    "type": "json_schema",
+    "schema": {
+     "additionalProperties": false,
+     "properties": {
+      "questions": {
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "title": "Questions",
+       "type": "array"
+      },
+      "rationale": {
+       "title": "Rationale",
+       "type": "string"
+      }
+     },
+     "required": [
+      "questions",
+      "rationale"
+     ],
+     "title": "Plan",
+     "type": "object"
+    }
+   }
+  }
+ },
+ "response": {
+  "id": "msg_011CfgK2rK39peSzuubwRnup",
+  "container": null,
+  "content": [
+   {
+    "citations": null,
+    "text": "{\"questions\":[\"What is 192.168.10.51 (hostname, role, OS, criticality), and does it actually run a service on TCP port 444?\",\"Is 172.16.0.1 a known attacker address, or is it the firewall/NAT gateway that external traffic passes through?\",\"Within \u00b130 minutes of event 2251110, how many flows did 172.16.0.1 send to 192.168.10.51, and to which ports? Do they look like a scan, a burst of web requests, or a single long-lived session?\",\"Do the neighbouring flows between 172.16.0.1 and 192.168.10.51 also score as attacks with the production detector, and are they also labelled web_attack?\",\"On 2017-07-05 around 18:00\u201319:00, did other internal hosts receive similar flows on port 444 or on web ports from the same source?\",\"Are there known vulnerabilities or ATT&CK techniques (e.g., exploitation of a public-facing application, or a non-standard port used for exploit or C2 traffic) for the service on port 444 of this host?\"],\"rationale\":\"The alert is labelled web_attack, but it is on port 444, not a standard web port. The SHAP contributions are driven by a large spread in backward packet lengths, which could be exploit traffic, for example a payload delivery or a reverse shell. Checking what the destination asset is and whether port 444 is a real service on it matters most. The source 172.16.0.1 may be the firewall NATing external attacker traffic, so enriching it settles attribution. Flow context and rescoring of neighbouring flows show whether this is a sustained attack or a one-off false positive. Vulnerability and ATT&CK lookups then confirm whether the pattern is plausible.\"}",
+    "type": "text"
+   }
+  ],
+  "diagnostics": null,
+  "model": "claude-opus-5-5",
+  "role": "assistant",
+  "stop_details": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1573,
+   "output_tokens": 560,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": null,
+   "service_tier": "standard"
+  },
+  "_request_id": "req_011CfgK2qtF2RwXPPhLLa7bT"
+ }
+}

@@ -1,0 +1,88 @@
+{
+ "request_hash": "031234c94ac47ac2b5ff0bec6aa92b865cbd2df83fcfed68418005e21b2b2236",
+ "model": "claude-opus-5-5",
+ "captured_at": "2026-10-04T01:14:20.741411+00:00",
+ "request": {
+  "model": "claude-opus-5-5",
+  "max_tokens": 16000,
+  "system": [
+   {
+    "type": "text",
+    "text": "You are the planning step of a defensive security triage system. You receive one network alert\nraised by a machine-learning detector on a single flow record, plus the list of read-only tools an\ninvestigator can call. Produce 2 to 6 short, concrete investigation questions that the tools can\nanswer, ordered by how much they would change the triage decision. Typical questions: whether the\nsource produced a burst of flows to many ports or hosts around the alert time; what the destination\nasset is and how critical it is; whether the source is a known attacker or an internal host; whether\na vulnerability or an ATT&CK technique matches the observed pattern; whether neighbouring flows\nalso score as attacks. Do not answer the questions yourself. Respond only with the JSON object.",
+    "cache_control": {
+     "type": "ephemeral"
+    }
+   }
+  ],
+  "messages": [
+   {
+    "role": "user",
+    "content": "{\"alert\": {\"alert_id\": \"96ebedbd9d124c638f93435aab28537e\", \"event_id\": \"357329\", \"metadata\": {\"timestamp\": \"2017-07-03T19:35:52.949510Z\", \"source_ip\": \"192.168.10.25\", \"destination_ip\": \"104.154.148.163\", \"source_port\": 62996, \"destination_port\": 80, \"protocol\": 6}, \"detector\": {\"attack_probability\": 0.014844824285816348, \"threshold\": 0.0002419239107545048, \"predicted_family\": \"port_scan\", \"family_probabilities\": {\"botnet\": 5.949507027109246e-06, \"brute_force\": 1.5861476094610956e-05, \"ddos\": 0.00016095083885801813, \"dos\": 0.3896892033632152, \"port_scan\": 0.6101259917268946, \"web_attack\": 2.043087910438825e-06}, \"top_contributions\": [{\"feature\": \"Bwd IAT Max\", \"value\": 110253136.0, \"shap_value\": 1.5843143397367563}, {\"feature\": \"Bwd Packet Length Std\", \"value\": 0.0, \"shap_value\": -1.210550850471506}, {\"feature\": \"Bwd Packet Length Mean\", \"value\": 0.0, \"shap_value\": 1.2024597133453356}, {\"feature\": \"Idle Max\", \"value\": 110207088.0, \"shap_value\": 0.8379646123461163}, {\"feature\": \"Fwd IAT Mean\", \"value\": 110207088.0, \"shap_value\": 0.7896633221632523}], \"model\": \"secops-detector v1\"}}, \"tools\": [{\"name\": \"search_events\", \"description\": \"Search network flow records in the event store within a time window of at most 24 hours, optionally filtered by source IP, destination IP, destination port and protocol.\"}, {\"name\": \"get_related_events\", \"description\": \"Aggregate the flows around one event (by event_id) within \\u00b1window_minutes (max 30): counts, distinct destinations and ports, top ports, byte totals and sample event ids for flows from the same source, to the same destination, and for the same source-destination pair.\"}, {\"name\": \"get_asset\", \"description\": \"Look up a host in the asset inventory by IP address: hostname, role, OS, known services, criticality, network zone.\"}, {\"name\": \"enrich_ip\", \"description\": \"Enrich an IP address: private or public, network zone (victim LAN, firewall, external attacker range), whether it is a known attacker address with notes, and the asset record if any.\"}, {\"name\": \"lookup_attack_technique\", \"description\": \"Look up MITRE ATT&CK enterprise techniques by exact id (e.g.\"}, {\"name\": \"lookup_cve\", \"description\": \"Look up vulnerabilities in the NVD (NIST) by exact CVE id or by keyword (at most 5 results): CVSS v3 score and severity, publication dates, a truncated description and up to 5 reference URLs.\"}, {\"name\": \"predict_attack\", \"description\": \"Score flows with the production intrusion detector: attack probability, the operating threshold, whether each flow would alert, the predicted attack family for alerts, and the top SHAP feature contributions.\"}]}"
+   }
+  ],
+  "output_config": {
+   "effort": "medium",
+   "format": {
+    "type": "json_schema",
+    "schema": {
+     "additionalProperties": false,
+     "properties": {
+      "questions": {
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1,
+       "title": "Questions",
+       "type": "array"
+      },
+      "rationale": {
+       "title": "Rationale",
+       "type": "string"
+      }
+     },
+     "required": [
+      "questions",
+      "rationale"
+     ],
+     "title": "Plan",
+     "type": "object"
+    }
+   }
+  }
+ },
+ "response": {
+  "id": "msg_011CfgJyPxhGRgcwqnsaYpFC",
+  "container": null,
+  "content": [
+   {
+    "citations": null,
+    "text": "{\"questions\":[\"Did 192.168.10.25 produce a burst of flows to many distinct destination hosts or ports within \u00b130 minutes of event 357329, which would indicate scanning, or only a few HTTP connections?\",\"What is 192.168.10.25 in the asset inventory (role, OS, zone)? Is it an ordinary internal workstation browsing the web?\",\"Is 104.154.148.163 a known attacker address or an external attacker range, or a benign public host such as a cloud-hosted web service?\",\"How many flows went between 192.168.10.25 and 104.154.148.163 on port 80 around the alert time? Do they show the same pattern of long idle times with no backward payload, which would suggest a kept-alive or idle HTTP session?\",\"When neighbouring flows from 192.168.10.25 are scored with predict_attack, do they also alert as port_scan or dos, or is this an isolated low-probability hit?\"],\"rationale\":\"The alert is an outbound flow from an internal host to a public IP on port 80. It has a low attack probability (0.015), and the prediction is driven by idle and inter-arrival-time features with zero backward payload. That pattern often fits a benign idle HTTP keep-alive connection rather than a port scan. The questions most likely to change the triage decision are: whether there is real scan breadth from the source, what roles the source and destination play, and whether neighbouring flows also alert.\"}",
+    "type": "text"
+   }
+  ],
+  "diagnostics": null,
+  "model": "claude-opus-5-5",
+  "role": "assistant",
+  "stop_details": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0,
+   "inference_geo": "global",
+   "input_tokens": 1558,
+   "output_tokens": 462,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": null,
+   "service_tier": "standard"
+  },
+  "_request_id": "req_011CfgJyPi43umGUdZbyNLLV"
+ }
+}

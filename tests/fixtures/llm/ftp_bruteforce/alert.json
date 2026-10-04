@@ -1,0 +1,69 @@
+{
+  "alert_id": "ef54c1e922c7403db163f7f82e703684",
+  "event_id": "1110604",
+  "metadata": {
+    "timestamp": "2017-07-04T13:12:28.358921Z",
+    "source_ip": "172.16.0.1",
+    "destination_ip": "192.168.10.50",
+    "source_port": 59104,
+    "destination_port": 21,
+    "protocol": 6
+  },
+  "prediction": {
+    "prediction_id": "339eca961e5e40d3934c8b5f1a9caf38",
+    "event_id": "1110604",
+    "model_name": "secops-detector",
+    "model_version": 1,
+    "run_id": "dcc36c43a75749eab6c77e55e79cf837",
+    "feature_spec_version": "v1-noport",
+    "attack_probability": 0.9999381987009204,
+    "threshold": 0.0002419239107545048,
+    "is_alert": true,
+    "predicted_family": "brute_force",
+    "family_probabilities": {
+      "botnet": 1.4044125349489889e-8,
+      "brute_force": 0.9999977670302541,
+      "ddos": 8.771650090026991e-7,
+      "dos": 1.238345893965813e-6,
+      "port_scan": 9.788923926438794e-8,
+      "web_attack": 5.525478248161831e-9
+    },
+    "top_contributions": [
+      {
+        "feature": "Bwd Packet Length Mean",
+        "value": 11.058823585510254,
+        "shap_value": 4.491684989709769
+      },
+      {
+        "feature": "Bwd RST Flags",
+        "value": 2.0,
+        "shap_value": 4.118474079009241
+      },
+      {
+        "feature": "Fwd IAT Min",
+        "value": 3.0,
+        "shap_value": 2.182548202769925
+      },
+      {
+        "feature": "Bwd Segment Size Avg",
+        "value": 11.058823585510254,
+        "shap_value": 1.2142953762737734
+      },
+      {
+        "feature": "SYN Flag Count",
+        "value": 2.0,
+        "shap_value": 0.946384506590917
+      }
+    ],
+    "timestamp": "2026-10-04T01:12:49.224972Z",
+    "latency_ms": 16.339721999884205
+  },
+  "key_features": {
+    "Bwd Packet Length Mean": 11.058823585510254,
+    "Bwd RST Flags": 2.0,
+    "Fwd IAT Min": 3.0,
+    "Bwd Segment Size Avg": 11.058823585510254,
+    "SYN Flag Count": 2.0
+  },
+  "status": "new"
+}

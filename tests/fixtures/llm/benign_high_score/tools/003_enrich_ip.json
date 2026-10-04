@@ -1,0 +1,16 @@
+{
+  "key": "896027685ebce164e3d17a2858898fa4e911767e3da2d385ecfcdb87513899a4",
+  "tool": "enrich_ip",
+  "arguments": {
+    "ip": "104.154.148.163"
+  },
+  "output": {
+    "ip": "104.154.148.163",
+    "is_private": false,
+    "zone": null,
+    "known_attacker": false,
+    "attacker_notes": null,
+    "asset": null,
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

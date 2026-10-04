@@ -1,10 +1,11 @@
 # Agentic Security Operations Platform
 ML-powered intrusion detection and evidence-grounded agentic alert investigation
 
-> **Status: Phase 1 of 7 (ML detection foundation) complete.** A supervised flow-level detector and
-> an attack-family classifier are trained, measured, explained and registered. Phases 2–7
-> (detection API, security tools, LangGraph investigation agent, evaluation harness,
-> productionisation, portfolio polish) are not started. Nothing here claims to be deployed.
+> **Status: Phases 1–2 of 7 complete.** A supervised flow-level detector and an attack-family
+> classifier are trained, measured, explained, registered, and served by a typed FastAPI service
+> from self-contained model bundles, in a non-root container. Phases 3–7 (security tools,
+> LangGraph investigation agent, evaluation harness, productionisation, portfolio polish) are not
+> started. Nothing here claims to be deployed.
 
 ## What this is
 
@@ -73,8 +74,11 @@ Bwd Packet Length Mean (response-side packet statistics).
 src/secops/
   config.py            settings from environment (SECOPS_* variables)
   data/                schema, manifest + download/verify, ingest, clean, split, build, CLI
-  detection/           feature spec, model factory, metrics, SHAP, plots, train, registry, CLI
+  detection/           feature spec, model factory, metrics, SHAP, plots, train, registry, bundle, CLI
+  schemas/             typed contracts: flow metadata + features, prediction, alert, API envelopes
+  api/                 FastAPI service: settings, API-key auth, DetectorService, routes, logging
 configs/               data defaults and one YAML per experiment
+scripts/               docker_smoke.py (container smoke test used by CI)
 tests/                 unit (no real data), integration (986-row fixture), fixtures
 docs/                  dataset.md, evaluation.md, interview-notes.md, design spec and plan
 data/README.md         dataset source, terms, hashes, citations
@@ -113,6 +117,34 @@ recall, a false-positive breakdown, an explainer background sample, and the mode
 `secops-train promote-best` applies the documented champion rule (best validation metric, ties
 within 0.0005 to the simpler model, then lower validation FPR) and moves the `champion` alias.
 
+## Serving (Phase 2)
+
+The champions are served by a FastAPI service from a **model bundle**: `secops-train export`
+resolves the registry alias once and writes a self-contained directory (estimator, feature spec,
+threshold, class order, SHAP background sample, provenance with the run's measured metrics). The
+API loads bundles from `SECOPS_MODEL_DIR` and never talks to MLflow. Contract, error table and
+bundle format: `docs/api.md`.
+
+```bash
+make export-models                       # -> $SECOPS_MODEL_DIR/{detector,family}
+export SECOPS_API_KEYS=dev-key
+make api                                 # http://localhost:8000
+curl -s -H "X-API-Key: dev-key" localhost:8000/model | jq .detector.metrics.test_pr_auc
+make docker-build && make compose-up     # same service in a non-root container
+```
+
+| Endpoint | What it returns |
+|---|---|
+| `POST /predict`, `POST /predict/batch` (≤ 1,000) | attack probability, the bundle's operating threshold, `is_alert`, attack family (alerts only), top-5 SHAP contributions, and an `Alert` object for rows above threshold |
+| `GET /model` | bundle provenance and the training run's logged metrics |
+| `GET /health` | readiness, open (no key) |
+
+Requests carry flow metadata (IPs, ports, timestamp) separately from the exactly-82-name feature
+dictionary; metadata is never used as a feature. Latency, one flow per request including SHAP:
+in-process p50 8.0 ms / p95 9.3 ms on the fixture bundle; 15–26 ms HTTP round trip to the
+container serving the real champions, whose probabilities match the in-process service exactly
+(`docs/api.md`, "Measured").
+
 ## Agent tools (Phase 3)
 
 Seven read-only, typed tools give the investigation agent real evidence to cite: event search
@@ -128,11 +160,48 @@ make load-events     # 1.7 M flows -> $SECOPS_DATA_DIR/events.db (migration appl
 make fetch-attack    # ATT&CK STIX bundle -> technique index
 ```
 
+## Investigation agent (Phase 4)
+
+An alert becomes an evidence-grounded triage report through a LangGraph state machine:
+plan → investigate → critic → finalize. Claude Opus 5.5 plans and investigates with the Phase 3
+tools (budget 12 calls); a deterministic critic plus Claude Sonnet 5.5 reject any finding that
+cites evidence the tools did not return; after two rejections the report is finalized as
+`needs_human_review`. Severity comes from a fixed rubric, never from the model. Every model call
+can be recorded and replayed, so the four real scenarios run in CI at zero cost. Details and the
+measured table: `docs/agent.md`.
+
+```bash
+uv run secops-agent investigate --event-id 1110604     # score the stored flow, investigate, persist
+uv run secops-agent show <investigation_id>
+uv run python scripts/record_agent_scenarios.py        # dry run; --go re-records the four scenarios
+```
+
+Measured on the four recorded scenarios (2026-10-04, Opus 5.5 investigator, Sonnet 5.5 critic):
+
+| Scenario | Event | Verdict | Severity | Family | Conf. | Tool calls | Critic rejections | LLM calls (Opus + Sonnet) | Opus input tokens (incl. cache reads) | Cache-read share | Opus output tokens | Cost | Wall-clock |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `ftp_bruteforce` | 1110604 | true_positive | high | brute_force | 0.95 | 5 | 0 | 4 + 1 | 25,977 | 51% | 2,607 | $0.122 | 34 s |
+| `internal_portscan` | 3083227 | true_positive | low | port_scan | 0.90 | 5 | 1 | 5 + 2 | 40,082 | 44% | 4,487 | $0.210 | 50 s |
+| `benign_high_score` | 357329 | needs_human_review | low | port_scan | 0.00 | 4 | 2 | 5 + 2 | 35,592 | 50% | 3,705 | $0.167 | 47 s |
+| `heartbleed` | 2251110 | needs_human_review | high | heartbleed (detector family: web_attack) | 0.00 | 7 | 2 | 5 + 2 | 46,766 | 38% | 5,047 | $0.249 | 56 s |
+
+Both true positives were found and grounded (T1110.001 and T1046 cited from the ATT&CK lookup).
+The benign flow and the Heartbleed flow (CVE-2014-0160 found) ended as `needs_human_review`:
+the investigator's drafts had the right verdicts, but the critic rejected them twice for
+over-strict grounding objections. That is the safe failure mode, and the critic's precision is
+what Phase 5 measures first. Total recorded cost $0.748.
+
 ## Security considerations
 
-Phase 1 handles no secrets and exposes no network service. Settings come from environment
-variables only; `.env` is git-ignored; `gitleaks` runs in pre-commit; dataset files never enter
-git. The threat model for the API and the agent's tools is written with Phases 2–6.
+Settings and API keys come from environment variables only; `.env` is git-ignored; `gitleaks`
+runs in pre-commit; dataset files and model bundles never enter git. The API authenticates every
+inference route with a constant-time API-key check and fails closed when no key is configured,
+refuses unauthenticated and oversized requests before reading the body, validates every field
+(exact feature-name set, bounded batches, finite numbers, no unknown fields), never echoes input
+values in error bodies, binds to loopback outside the container, and runs as a non-root user in a
+read-only container. Model bundles are cloudpickle and are therefore a code-execution trust boundary: they
+are built from the same lockfile as the image and mounted read-only. Rate limiting, persistence,
+tracing and the agent's tool boundaries arrive with Phases 3–6.
 
 ## Limitations (Phase 1)
 
@@ -159,10 +228,10 @@ flaw.* WTMC 2021.
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Architecture, dataset choice, evaluation strategy | done |
-| 1 | Dataset pipeline, baselines, MLflow, SHAP, registry | **done** |
-| 2 | FastAPI detection service, typed schemas, Docker | not started |
-| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | **in progress** (detector tool awaits the Phase 2 merge) |
-| 4 | LangGraph investigation agent with critic and loop limits | not started |
+| 1 | Dataset pipeline, baselines, MLflow, SHAP, registry | done |
+| 2 | FastAPI detection service, typed schemas, model bundles, Docker | done |
+| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | **done** except the detector tool (in progress) |
+| 4 | LangGraph investigation agent with critic and loop limits | **done** |
 | 5 | Golden set, agent evaluation harness, regression gate, cost tracking | not started |
 | 6 | PostgreSQL, Langfuse, auth, CI/CD, Compose, Cloud Run | not started |
 | 7 | Diagrams, demo, portfolio polish | not started |

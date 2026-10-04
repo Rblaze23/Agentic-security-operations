@@ -1,0 +1,36 @@
+{
+  "key": "ab99352959e30cdad0670506137a606380077fc4500566edfa7bbd15892e7502",
+  "tool": "lookup_attack_technique",
+  "arguments": {
+    "technique_id": "T1046",
+    "keyword": null,
+    "max_results": 5
+  },
+  "output": {
+    "status": "found",
+    "techniques": [
+      {
+        "technique_id": "T1046",
+        "name": "Network Service Discovery",
+        "tactics": [
+          "discovery"
+        ],
+        "description": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port, vulnerability, and/or wordlist scans using tools that are brought onto a system.(Citation: CISA AR21-126A FIVEHANDS May 2021) Within cloud environments, adversaries may attempt to discover services running on other cloud hosts. Additionally, if the cloud environment is connected to a on-premises environment, adversaries may be able to identify services running on non-cloud systems as well. Within macOS environments, adversaries may use the native Bonjour application to discover services running on other macOS hosts within a network. The Bonjour mDNSResponder daemon automatically registers and advertises a host\u2019s registered services on the network. For example, adversaries can use a mDNS query (such as <code>dns-sd -B _ssh._tcp .</code>) to f\u2026",
+        "platforms": [
+          "Containers",
+          "IaaS",
+          "Linux",
+          "macOS",
+          "Network Devices",
+          "Windows"
+        ],
+        "url": "https://attack.mitre.org/techniques/T1046",
+        "version": "3.2",
+        "is_subtechnique": false,
+        "untrusted_text": true
+      }
+    ],
+    "attack_version": "19.2",
+    "source": "mitre-attack"
+  }
+}

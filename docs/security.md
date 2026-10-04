@@ -40,3 +40,17 @@ dependency (constant-time, fail closed), body size cap, strict validation that n
 input values, non-root read-only container, loopback binding outside the container, and
 cloudpickle model bundles treated as a code-execution trust boundary (built from the same
 lockfile, mounted read-only). Details in `docs/api.md`.
+
+## Phase 4: investigation agent
+
+**Assets at risk.** The Anthropic API key, the investigation records (contain flow metadata and
+model output, no payloads), API spend.
+
+| Threat | Control | Where |
+|---|---|---|
+| Prompt injection through evidence (CVE/ATT&CK text, future free text) | Evidence is rendered as data blocks with `untrusted_text`; the system prompt forbids treating evidence as instructions; the deterministic critic rejects instruction-like findings; a fixture test injects "ignore all previous instructions" and asserts the verdict is unchanged | `agent/tools.py`, `agent/critic.py`, `tests/unit/agent/test_graph.py` |
+| Fabricated references (evidence ids, CVEs, techniques) | Critic rules require every cited id to exist and every CVE/technique to appear in the cited lookup evidence with status `found` | `agent/critic.py` |
+| Runaway cost or loops | Tool budget (12), at most 2 critic rejections, `max_tokens` cap, per-investigation cost persisted; the CLI states cost after each run | `agent/graph.py`, `agent/tools.py`, `db/models.py` |
+| Key leakage | Key read from the environment or git-ignored `.env` through `AgentSettings` (`SecretStr`), passed to the SDK client explicitly, never logged; fixtures store request bodies only (no headers) | `agent/settings.py`, `agent/llm.py` |
+| Tool misuse by the model | The agent can only call the Phase 3 read-only registry; arguments are validated by the tool's Pydantic model before execution; invalid calls consume budget and return a validation error | `agent/tools.py` |
+| Ground truth leaking into the investigation | The agent sees only tool outputs, which carry no labels (Phase 3 registry test); scenario fixtures are built from the same outputs | `tests/unit/tools/test_registry.py` |

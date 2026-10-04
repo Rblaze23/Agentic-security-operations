@@ -1,0 +1,55 @@
+{
+  "scenario": "heartbleed",
+  "event_id": 2251110,
+  "verdict": "needs_human_review",
+  "severity": "high",
+  "attack_family": "heartbleed (detector family: web_attack)",
+  "confidence": 0.0,
+  "status": "done",
+  "tool_calls": [
+    "get_asset",
+    "enrich_ip",
+    "get_related_events",
+    "predict_attack",
+    "lookup_cve",
+    "lookup_attack_technique",
+    "search_events"
+  ],
+  "critic_rejections": 2,
+  "issues": [
+    {
+      "code": "unsupported_statement",
+      "message": "The claim that the 119 s flows were 'back-to-back' on source port 45022 with 'about 7.9 KB forward and 7.5\u20137.9 MB back' is supported, but 'every flow from 172.16.0.1 to port 444 went to 192.168.10.51' and 'four short connections ... (about 5 s each, with resets)' are supported. However, the evidence is truncated and the finding asserts a time range covering flows beyond what is visible in the data, so the complete 'from 18:12 onward' pattern cannot be confirmed from the shown data.",
+      "finding_index": 3
+    },
+    {
+      "code": "unsupported_statement",
+      "message": "The finding says all visible flows went to 192.168.10.51 and that the eight flows on source port 45022 each lasted about 119 s and carried about 7.9\u20138.3 KB forward and 7.5\u20137.9 MB back. The visible data is cut off after the ninth port-45022 flow, so the claim of eight such flows ending at 18:24:17 is supported, but the finding also states that four short connections show resets. In the data, only the rst_count of 1 is shown, which does support this. Also, the finding says 15 flows were found, which matches. No contradiction is found for this item.",
+      "finding_index": 3
+    }
+  ],
+  "usage": {
+    "by_model": {
+      "claude-opus-5-5": {
+        "calls": 5,
+        "input_tokens": 29010,
+        "output_tokens": 5047,
+        "cache_read_tokens": 17756,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.2205312
+      },
+      "claude-sonnet-5-5": {
+        "calls": 2,
+        "input_tokens": 12052,
+        "output_tokens": 438,
+        "cache_read_tokens": 1800,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.028844
+      }
+    }
+  },
+  "cost_usd": 0.24937520000000002,
+  "wall_s": 56.245861182,
+  "prompt_version": "2026-10-04.2",
+  "errors": []
+}

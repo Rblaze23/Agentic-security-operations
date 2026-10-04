@@ -69,6 +69,10 @@ class InvestigationResult:
     latency_ms: float
     prompt_version: str = PROMPT_VERSION
     errors: list[str] = field(default_factory=list)
+    alert_id: str = ""
+    event_id: str | None = None
+    model_investigator: str = ""
+    model_critic: str = ""
 
 
 # ---- helpers ------------------------------------------------------------------------------
@@ -133,9 +137,9 @@ def build_graph(deps: AgentDeps) -> Any:
             questions = Plan.model_validate(resp.parsed).questions
             errors: list[str] = []
         except (LLMRefusalError, LLMTruncatedError, ValidationError, anthropic.APIError) as e:
-            log.warning("planner failed (%s); using the default plan", type(e).__name__)
+            log.warning("planner failed (%s: %s); using the default plan", type(e).__name__, e)
             questions = list(DEFAULT_PLAN)
-            errors = [f"planner fallback: {type(e).__name__}"]
+            errors = [f"planner fallback: {type(e).__name__}: {str(e)[:200]}"]
         first_turn = json.dumps(
             {
                 "task": "Investigate this alert and answer with the required JSON object "
@@ -170,7 +174,8 @@ def build_graph(deps: AgentDeps) -> Any:
                     output_model=DraftReport,
                 )
             except (LLMRefusalError, LLMTruncatedError, anthropic.APIError) as e:
-                errors.append(f"investigator failed: {type(e).__name__}")
+                log.error("investigator failed (%s: %s)", type(e).__name__, e)
+                errors.append(f"investigator failed: {type(e).__name__}: {str(e)[:200]}")
                 return {
                     "messages": messages,
                     "evidence": evidence,
@@ -378,4 +383,8 @@ def run_investigation(
         usage=usage,
         latency_ms=(time.perf_counter() - start) * 1000,
         errors=final.get("errors", []),
+        alert_id=alert.alert_id,
+        event_id=alert.event_id,
+        model_investigator=deps.investigator.model,
+        model_critic=deps.critic.model,
     )

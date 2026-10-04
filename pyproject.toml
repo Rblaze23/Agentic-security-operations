@@ -20,6 +20,8 @@ dependencies = [
   "matplotlib>=3.9",
   "requests>=2.32",
   "tabulate>=0.9",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
   "sqlalchemy>=2.0",
   "alembic>=1.13",
   "anthropic>=1.0",
@@ -29,6 +31,8 @@ dependencies = [
 [project.scripts]
 secops-data = "secops.data.cli:app"
 secops-train = "secops.detection.cli:app"
+secops-api = "secops.api.__main__:main"
+secops-agent = "secops.agent.cli:main"
 
 [dependency-groups]
 dev = [
@@ -40,6 +44,7 @@ dev = [
   "types-PyYAML",
   "types-requests",
   "pre-commit>=3.8",
+  "httpx>=0.27",
 ]
 
 [build-system]
@@ -72,5 +77,6 @@ testpaths = ["tests"]
 markers = [
   "integration: slower tests that run the pipelines on the fixture",
   "network: opt-in tests that call external services",
+  "llm: opt-in tests that call the Anthropic API and cost money",
 ]
-addopts = "-q -m 'not network'"
+addopts = "-q -m 'not network and not llm'"

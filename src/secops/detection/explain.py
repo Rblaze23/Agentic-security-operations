@@ -79,3 +79,25 @@ def top_k_contributions(
         sv = sv[:, class_index]
     order = np.argsort(-np.abs(sv))[:k]
     return [FeatureContribution(feature_names[i], float(x[i]), float(sv[i])) for i in order]
+
+
+def top_k_contributions_batch(
+    explainer: Any,
+    X: np.ndarray,
+    feature_names: list[str],
+    k: int = 5,
+    class_index: int | None = None,
+) -> list[list[FeatureContribution]]:
+    """`top_k_contributions` for every row of X with a single SHAP call."""
+    sv = _shap_tensor(explainer, X)
+    if sv.ndim == 3:
+        if class_index is None:
+            raise ValueError("class_index is required for a multiclass explainer")
+        sv = sv[:, :, class_index]
+    out: list[list[FeatureContribution]] = []
+    for i in range(X.shape[0]):
+        order = np.argsort(-np.abs(sv[i]))[:k]
+        out.append(
+            [FeatureContribution(feature_names[j], float(X[i, j]), float(sv[i, j])) for j in order]
+        )
+    return out

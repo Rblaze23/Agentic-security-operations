@@ -1,0 +1,26 @@
+{
+  "key": "03db4c47041c9c9ed87a5b59f0c55cd965d5919dc0467761db83c7c88ca5a644",
+  "tool": "get_asset",
+  "arguments": {
+    "ip": "192.168.10.50"
+  },
+  "output": {
+    "status": "found",
+    "asset": {
+      "ip": "192.168.10.50",
+      "hostname": "web-server-16",
+      "role": "Public web server",
+      "os": "Ubuntu 16.04",
+      "services": [
+        "HTTP/80",
+        "FTP/21",
+        "SSH/22"
+      ],
+      "criticality": "high",
+      "zone": "victim_lan",
+      "public_ip": "205.174.165.68",
+      "notes": "Target of the FTP/SSH brute force, DoS, web attacks and DDoS in the schedule"
+    },
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

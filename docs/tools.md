@@ -29,7 +29,7 @@ so the agent prompt can treat it as content, not instructions.
 | `enrich_ip` | `ip` | `IpEnrichment{is_private, zone, known_attacker, attacker_notes, asset}` | `data/seeds/threat_intel.yaml` + assets |
 | `lookup_attack_technique` | `technique_id` (`T1110`, `T1110.001`) **or** `keyword` ≤ 100 chars; `max_results` ≤ 5 | `AttackLookupResult{status, techniques[], attack_version}` | local ATT&CK index |
 | `lookup_cve` | `cve_id` **or** `keyword` ≤ 100 chars; `max_results` ≤ 5 | `CveLookupResult{status: found/not_found/unavailable, records[], cached}` | NVD API 2.0 + cache |
-| `predict_attack` | `event_ids` ≤ 100 **or** one feature dictionary | `PredictAttackResult{predictions[], missing_event_ids}` | Phase 2 `DetectorService` (pending the Phase 2 merge) |
+| `predict_attack` | `event_ids` ≤ 100 **or** one feature dictionary (full feature set) | `PredictAttackResult{predictions[{event_id, attack_probability, threshold, is_alert, predicted_family, family_probabilities, top_contributions}], missing_event_ids, model_name, model_version, feature_spec_version}` | Phase 2 `DetectorService` on the exported bundles (`SECOPS_MODEL_DIR`) |
 
 `EventSummary` (what the event tools may say about a flow): event id, timestamp (UTC), 5-tuple,
 duration, forward/backward packets and bytes, SYN/FIN/RST counts. Nothing else.

@@ -15,6 +15,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
+from secops.agent.llm import sanitize_schema
 from secops.schemas.agent import MAX_SUMMARY_CHARS, Evidence, ToolCallRecord
 from secops.tools.registry import ToolRegistry
 
@@ -38,7 +39,7 @@ def tool_definitions(registry: ToolRegistry) -> list[dict[str, Any]]:
     """
     defs: list[dict[str, Any]] = []
     for spec in registry.all():
-        schema = spec.input_schema()
+        schema = sanitize_schema(spec.input_schema())
         schema["additionalProperties"] = False
         definition: dict[str, Any] = {
             "name": spec.name,
@@ -136,6 +137,14 @@ def summarize(tool: str, output: BaseModel) -> str:
 
 
 # ---- execution -----------------------------------------------------------------------------
+def evidence_data(ev: Evidence, max_chars: int = DEFAULT_MAX_PAYLOAD_CHARS) -> str:
+    """The data block exactly as the investigator saw it (the critic must see the same)."""
+    data = json.dumps(ev.payload, sort_keys=True, default=str)
+    if len(data) > max_chars:
+        data = data[:max_chars] + f"… [truncated, {len(data)} chars total]"
+    return data
+
+
 class ToolExecutor:
     def __init__(
         self,
@@ -247,9 +256,7 @@ class ToolExecutor:
         return ev
 
     def _result_block(self, tool_use: dict[str, Any], ev: Evidence, error: bool) -> dict[str, Any]:
-        data = json.dumps(ev.payload, sort_keys=True, default=str)
-        if len(data) > self.max_payload_chars:
-            data = data[: self.max_payload_chars] + f"… [truncated, {len(data)} chars total]"
+        data = evidence_data(ev, self.max_payload_chars)
         envelope = {
             "evidence_id": ev.evidence_id,
             "tool": ev.tool,

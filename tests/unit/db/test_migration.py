@@ -46,3 +46,30 @@ def test_upgrade_creates_events_and_load_runs(migrated_engine: Engine) -> None:
 def test_upgrade_is_idempotent(db_url: str) -> None:
     upgrade_to_head(db_url)
     upgrade_to_head(db_url)  # second run is a no-op, not an error
+
+
+def test_upgrade_creates_investigations_and_tool_calls(migrated_engine: Engine) -> None:
+    insp = inspect(migrated_engine)
+    assert {"investigations", "tool_calls"} <= set(insp.get_table_names())
+    cols = {c["name"] for c in insp.get_columns("investigations")}
+    assert {
+        "investigation_id",
+        "alert_id",
+        "event_id",
+        "verdict",
+        "severity",
+        "cost_usd",
+        "prompt_version",
+        "report_json",
+        "created_at",
+    } <= cols
+    assert {c["name"] for c in insp.get_columns("tool_calls")} >= {
+        "investigation_id",
+        "evidence_id",
+        "tool",
+        "arguments_json",
+        "status",
+        "latency_ms",
+    }
+    fks = insp.get_foreign_keys("tool_calls")
+    assert fks and fks[0]["referred_table"] == "investigations"

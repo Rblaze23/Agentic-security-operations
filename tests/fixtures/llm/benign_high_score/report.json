@@ -1,0 +1,92 @@
+{
+  "alert_id": "96ebedbd9d124c638f93435aab28537e",
+  "verdict": "needs_human_review",
+  "attack_family": "port_scan",
+  "severity": "low",
+  "confidence": 0.0,
+  "summary": "This looks like a false positive. The flagged flow is an empty connection close on port 80, from an ordinary macOS workstation (192.168.10.25) to a public host with no attacker record (104.154.148.163). It lasted about 110 s, carried 0 payload bytes either way and ended with FIN/RST flags, which is how an idle HTTP keep-alive session gets closed. Three minutes earlier the same two hosts had one normal HTTP exchange of 454 bytes out and 19,969 bytes back, which the detector scored as benign. The source's other traffic is mostly to ports 443, 53 and 80, which fits normal browsing rather than a scan. The detector's attack probability is only 0.0148. It crosses the very low alert threshold (0.00024) mainly because of the long idle time and the empty return traffic. Its port_scan/dos family guess is a split between two labels and has nothing in the traffic to back it up.",
+  "findings": [
+    {
+      "kind": "observed",
+      "statement": "The anchor flow 357329 lasted 110,253 ms, with 2 packets each way, 0 bytes each way, 2 FIN, 1 RST and 0 SYN flags. It is the only flow to this destination in ±30 minutes apart from event 114073 three minutes earlier (454 bytes out, 19,969 bytes back on port 80).",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "In ±30 minutes the source made 4,356 flows to 591 IPs but only 17 ports. The top ports were 443 (2,819), 53 (1,042) and 80 (398), followed by 3268 (20), 389 (19), 123 (17) and 139 (13). Total bytes were 46,697,101 inbound and 3,775,808 outbound.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "Ports 443, 53, 80, 3268, 389, 123 and 139 are the usual ports for HTTPS, DNS, HTTP, directory lookups, time sync and file sharing. This mix looks like normal workstation traffic; the meaning of each port is my interpretation, not something the tools reported.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "192.168.10.25 is the asset 'mac': a macOS workstation in victim_lan with medium criticality and no attacker record. 104.154.148.163 is a public address with no asset record, no zone and no attacker record.",
+      "evidence_ids": [
+        "E2",
+        "E3"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "The detector gave the anchor an attack probability of 0.0148 against a threshold of 0.00024. Its family split was port_scan 0.61 / dos 0.39, driven by Bwd IAT Max, Idle Max and the zero backward packet length.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "Of 11 neighbouring flows from the source (including the earlier HTTP flow 114073), 4 crossed the threshold, but only with very low probabilities: for example 243591 at about 0.0007, labelled dos. The earlier same-pair flow 114073 scored 0.000056 and did not alert.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "The traffic looks like a workstation browsing the web: many destinations, few ports, and much more data coming in than going out. The alerted flow is the idle close of an HTTP session, not scanning or a denial of service. The model's long-idle, empty-response features match this teardown pattern and do not point to malicious activity.",
+      "evidence_ids": [
+        "E1",
+        "E2",
+        "E4"
+      ]
+    }
+  ],
+  "attack_techniques": [],
+  "cves": [],
+  "recommended_actions": [
+    {
+      "action": "Close as a false positive. Consider adding a suppression or tuning rule for idle FIN/RST teardown flows with no payload from workstations, because the current threshold (0.00024) lets very-low-probability flows alert.",
+      "evidence_ids": [
+        "E1",
+        "E4"
+      ]
+    }
+  ],
+  "uncertainties": [
+    "There is no external reputation data for 104.154.148.163; the only local fact is that it is a public address with no attacker record.",
+    "Only 11 of the 4,356 neighbouring flows were scored, and part of the scoring output was cut off.",
+    "Payload contents are not visible, so the HTTP traffic could not be checked directly.",
+    "critic: The finding says the earlier flow (event 114073) occurred three minutes before the anchor. The data supports this: anchor 19:35:52 vs 19:32:52. However, it also says the anchor had '2 packets each way'. The data supports this too (fwd_packets 2, bwd_packets 2). Port 80 for the earlier flow is supported by the same_pair data. The 'only flow to this destination in ±30 minutes apart from 114073' is supported. No unsupported claim found, but the 'Total bytes were 46,697,101 inbound and 3,775,808 outbound' in finding 1 is supported by total_bwd_bytes/total_fwd_bytes, and the port 123 count of 17 is supported by the data."
+  ],
+  "model_prediction": {
+    "attack_probability": 0.014844824285816348,
+    "threshold": 0.0002419239107545048,
+    "predicted_family": "port_scan",
+    "model_name": "secops-detector",
+    "model_version": 1
+  },
+  "investigation_steps": [
+    "get_related_events({\"event_id\": 357329, \"window_minutes\": 30}) -> E1 [ok]",
+    "enrich_ip({\"ip\": \"192.168.10.25\"}) -> E2 [ok]",
+    "enrich_ip({\"ip\": \"104.154.148.163\"}) -> E3 [ok]",
+    "predict_attack({\"event_ids\": [114073, 243156, 110830, 243591, 110818, 110819, 110820, 231619, 197668, 333036, 168710]}) -> E4 [ok]"
+  ]
+}

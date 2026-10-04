@@ -4,6 +4,8 @@ from typing import Any
 import pytest
 from sqlalchemy import Engine
 
+from secops.api.detector import DetectorService
+from secops.tools.detector import DetectorTool
 from secops.tools.registry import EXPECTED_TOOLS, ToolRegistry, build_registry
 from tests.unit.tools.test_cve import FixtureFetcher
 
@@ -20,15 +22,20 @@ GROUND_TRUTH = {
 
 
 @pytest.fixture(scope="module")
-def registry(event_engine: Engine, tmp_path_factory: pytest.TempPathFactory) -> ToolRegistry:
+def registry(
+    event_engine: Engine, fixture_service: DetectorService, tmp_path_factory: pytest.TempPathFactory
+) -> ToolRegistry:
     from secops.tools.nvd import NvdClient
 
-    return build_registry(
+    reg = build_registry(
         engine=event_engine,
         attack_index_path=SUBSET,
         nvd_client=NvdClient(fetcher=FixtureFetcher(), cache_dir=tmp_path_factory.mktemp("nvd")),
         include_detector=False,
     )
+    for spec in DetectorTool(fixture_service, event_engine).specs():
+        reg.register(spec)
+    return reg
 
 
 def _property_names(schema: dict[str, Any]) -> set[str]:
@@ -55,7 +62,7 @@ def _int_fields(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
 
 
 def test_all_expected_tools_registered(registry: ToolRegistry) -> None:
-    assert set(registry.names()) == set(EXPECTED_TOOLS) - {"predict_attack"}
+    assert set(registry.names()) == set(EXPECTED_TOOLS)
     for spec in registry.all():
         assert spec.read_only is True
         assert spec.name == spec.name.lower() and " " not in spec.name

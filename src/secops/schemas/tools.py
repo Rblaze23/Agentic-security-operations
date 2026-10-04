@@ -221,3 +221,50 @@ class CveLookupResult(BaseModel):
     records: list[CveRecord]
     cached: bool
     source: Literal["nvd"] = "nvd"
+
+
+# ---- predict_attack (Phase 3 Task 6; Phase 2's DetectorService as a tool) ---------------------
+MAX_PREDICT_BATCH = 100
+MAX_FEATURE_KEYS = 200
+
+
+class PredictAttackInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    event_ids: list[int] | None = Field(default=None, min_length=1, max_length=MAX_PREDICT_BATCH)
+    features: dict[str, float | None] | None = Field(
+        default=None, min_length=1, max_length=MAX_FEATURE_KEYS
+    )
+
+    @model_validator(mode="after")
+    def _one_of(self) -> PredictAttackInput:
+        if (self.event_ids is None) == (self.features is None):
+            raise ValueError("provide exactly one of event_ids or features")
+        return self
+
+
+class ContributionOut(BaseModel):
+    feature: str
+    value: float | None
+    shap_value: float
+
+
+class ToolPrediction(BaseModel):
+    """One detector score. No stored label: the model's opinion only."""
+
+    event_id: int | None
+    attack_probability: float = Field(ge=0.0, le=1.0)
+    threshold: float = Field(ge=0.0)
+    is_alert: bool
+    predicted_family: str | None
+    family_probabilities: dict[str, float] | None
+    top_contributions: list[ContributionOut]
+
+
+class PredictAttackResult(BaseModel):
+    predictions: list[ToolPrediction]
+    missing_event_ids: list[int]
+    model_name: str
+    model_version: int
+    feature_spec_version: str
+    source: Literal["detector"] = "detector"

@@ -1,0 +1,26 @@
+{
+  "key": "00a926688acea439413c007fa9d5444826d72db2055e2e0b9d40214e262784cc",
+  "tool": "enrich_ip",
+  "arguments": {
+    "ip": "192.168.10.25"
+  },
+  "output": {
+    "ip": "192.168.10.25",
+    "is_private": true,
+    "zone": "victim_lan",
+    "known_attacker": false,
+    "attacker_notes": null,
+    "asset": {
+      "ip": "192.168.10.25",
+      "hostname": "mac",
+      "role": "Workstation",
+      "os": "macOS",
+      "services": [],
+      "criticality": "medium",
+      "zone": "victim_lan",
+      "public_ip": null,
+      "notes": null
+    },
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

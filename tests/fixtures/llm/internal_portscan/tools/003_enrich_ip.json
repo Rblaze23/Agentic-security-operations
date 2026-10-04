@@ -1,0 +1,26 @@
+{
+  "key": "7b47c746ae624ca3950267ac8332ff63e1aee24d819e7c1bf99bb3970ef2356a",
+  "tool": "enrich_ip",
+  "arguments": {
+    "ip": "192.168.10.17"
+  },
+  "output": {
+    "ip": "192.168.10.17",
+    "is_private": true,
+    "zone": "victim_lan",
+    "known_attacker": false,
+    "attacker_notes": null,
+    "asset": {
+      "ip": "192.168.10.17",
+      "hostname": "ubuntu-14-64",
+      "role": "Workstation",
+      "os": "Ubuntu 14.04 64-bit",
+      "services": [],
+      "criticality": "medium",
+      "zone": "victim_lan",
+      "public_ip": null,
+      "notes": null
+    },
+    "source": "https://www.unb.ca/cic/datasets/ids-2017.html"
+  }
+}

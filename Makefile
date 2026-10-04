@@ -1,7 +1,7 @@
 # The venv lives on the Linux filesystem: /mnt/* (DrvFs) cannot create the symlinks uv needs.
 export UV_PROJECT_ENVIRONMENT ?= $(HOME)/.venvs/secops
 
-.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui load-events fetch-attack test-network
+.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui export-models api docker-build docker-smoke compose-up compose-down load-events fetch-attack test-network
 
 setup:
 	uv sync --all-groups
@@ -54,6 +54,26 @@ train-all: train-binary train-family train-heldout train-ablations
 
 mlflow-ui:
 	uv run mlflow ui --backend-store-uri "$$(uv run python -c 'from secops.config import get_settings as g; print(g().resolved_tracking_uri())')"
+
+export-models:
+	uv run secops-train export --model-name secops-detector --out "$${SECOPS_MODEL_DIR:-$$HOME/data/secops/models}/detector"
+	uv run secops-train export --model-name secops-family-classifier --out "$${SECOPS_MODEL_DIR:-$$HOME/data/secops/models}/family"
+
+api:
+	uv run secops-api
+
+docker-build:
+	docker build --target runtime -t secops-api:local .
+
+# Builds fixture bundles, starts the image against them and checks /health and /predict.
+docker-smoke: docker-build
+	uv run python scripts/docker_smoke.py secops-api:local
+
+compose-up:
+	docker compose up --build -d api
+
+compose-down:
+	docker compose down
 
 load-events:
 	uv run secops-data load-events --attempted-policy relabel_benign

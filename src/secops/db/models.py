@@ -4,8 +4,19 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Index, Integer, LargeBinary, SmallInteger, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    LargeBinary,
+    SmallInteger,
+    String,
+    Text,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -69,3 +80,60 @@ class LoadRun(Base):
     git_sha: Mapped[str] = mapped_column(String(40), nullable=False)
     rows: Mapped[int] = mapped_column(Integer, nullable=False)
     seconds: Mapped[float] = mapped_column(nullable=False)
+
+
+class Investigation(Base):
+    """One agent investigation of one alert: outcome, cost and the full report as JSON."""
+
+    __tablename__ = "investigations"
+
+    investigation_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    alert_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(32), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    attack_family: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    iterations: Mapped[int] = mapped_column(Integer, nullable=False)
+    tool_call_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    cache_read_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    cost_usd: Mapped[float] = mapped_column(Float, nullable=False)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False)
+    model_investigator: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_critic: Mapped[str] = mapped_column(String(64), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    report_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    tool_calls: Mapped[list[ToolCall]] = relationship(
+        back_populates="investigation", cascade="all, delete-orphan", order_by="ToolCall.id"
+    )
+
+    __table_args__ = (
+        Index("ix_investigations_alert_id", "alert_id"),
+        Index("ix_investigations_created_at", "created_at"),
+    )
+
+
+class ToolCall(Base):
+    """One tool invocation inside an investigation, keyed by the evidence id it produced."""
+
+    __tablename__ = "tool_calls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    investigation_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("investigations.investigation_id"), nullable=False
+    )
+    evidence_id: Mapped[str] = mapped_column(String(16), nullable=False)
+    tool: Mapped[str] = mapped_column(String(64), nullable=False)
+    arguments_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False)
+    called_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    investigation: Mapped[Investigation] = relationship(back_populates="tool_calls")
+
+    __table_args__ = (Index("ix_tool_calls_investigation_id", "investigation_id"),)

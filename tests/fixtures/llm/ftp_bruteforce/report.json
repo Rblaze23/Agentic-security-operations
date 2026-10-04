@@ -1,0 +1,125 @@
+{
+  "alert_id": "ef54c1e922c7403db163f7f82e703684",
+  "verdict": "true_positive",
+  "attack_family": "brute_force",
+  "severity": "high",
+  "confidence": 0.95,
+  "summary": "This is an FTP brute-force attack. Within ±30 minutes of the alert, 172.16.0.1 opened 2,469 connections to 192.168.10.50. 2,468 of them went to port 21 (FTP) and one went to port 80, over about 48 minutes. That works out to roughly 50 short FTP sessions a minute, with small replies and resets, which looks like repeated login attempts. The target is web-server-16, a high-criticality Ubuntu 16.04 public web server that runs FTP. 172.16.0.1 is the firewall's inside address, and the enrichment record says traffic from external attackers shows up under this address because of NAT. All 10 neighbouring flows I scored were also flagged as brute_force. Nothing in the flow data shows that a login succeeded.",
+  "findings": [
+    {
+      "kind": "observed",
+      "statement": "Within ±30 min of event 1110604, 172.16.0.1 sent 2,469 flows to a single host, 192.168.10.50. 2,468 went to port 21 and 1 to port 80, between 12:42:29 and 13:30:03. Totals were 296,238 bytes sent and 463,704 bytes returned.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "The alerting flow lasted 8.67 s. It carried 11 packets (116 bytes) from the source and 17 packets (188 bytes) back, with 2 SYN, 2 FIN and 2 RST flags.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "In the same window, 192.168.10.50 also received traffic on port 22 (148 flows) and port 139 (44 flows), plus single flows to several high ports. These came from sources other than 172.16.0.1, since that address only used ports 21 and 80.",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "192.168.10.50 is web-server-16: a public web server running Ubuntu 16.04, criticality high, in the victim_lan zone, with HTTP/80, FTP/21 and SSH/22. Its inventory notes list it as a target of FTP/SSH brute force.",
+      "evidence_ids": [
+        "E2"
+      ]
+    },
+    {
+      "kind": "observed",
+      "statement": "172.16.0.1 is the firewall's inside (private) address and is flagged as a known attacker. Because of NAT, traffic from external attackers appears under this address.",
+      "evidence_ids": [
+        "E3"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "The detector scored the alert flow at 0.99994 attack probability with brute_force as the family (0.999998). The features that pushed the score up most were Bwd Packet Length Mean, Bwd RST Flags and Fwd IAT Min.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "model_prediction",
+      "statement": "All 10 sampled neighbouring flows on the same source/destination pair scored above the threshold as brute_force, each at about 0.9999, with nearly the same feature contributions.",
+      "evidence_ids": [
+        "E4"
+      ]
+    },
+    {
+      "kind": "inference",
+      "statement": "The pattern points to an automated password-guessing tool hitting the FTP service: thousands of near-identical, short, low-byte sessions that end in resets, against one host and one port. The return traffic is small and uniform, which fits server replies rejecting logins rather than files being transferred.",
+      "evidence_ids": [
+        "E1",
+        "E4"
+      ]
+    }
+  ],
+  "attack_techniques": [
+    {
+      "technique_id": "T1110.001",
+      "name": "Password Guessing",
+      "evidence_ids": [
+        "E5"
+      ]
+    }
+  ],
+  "cves": [],
+  "recommended_actions": [
+    {
+      "action": "Block the external attacker sources behind the NAT at the perimeter firewall, or rate-limit inbound FTP (21/tcp) to 192.168.10.50. Use the firewall's NAT logs to find the real source addresses, since the flows only show 172.16.0.1.",
+      "evidence_ids": [
+        "E1",
+        "E3"
+      ]
+    },
+    {
+      "action": "Check the vsftpd/FTP authentication logs on web-server-16 between 12:42 and 13:30 UTC on 2017-07-04 for any successful logins. Reset the passwords of any account that was targeted.",
+      "evidence_ids": [
+        "E1",
+        "E2"
+      ]
+    },
+    {
+      "action": "Turn off FTP on this public web server if it is not needed, or move it to SFTP and add account lockout or fail2ban.",
+      "evidence_ids": [
+        "E2"
+      ]
+    },
+    {
+      "action": "Look into the SSH (port 22) and SMB (port 139) traffic to the same host in the same window, which may be a parallel credential attack.",
+      "evidence_ids": [
+        "E1"
+      ]
+    }
+  ],
+  "uncertainties": [
+    "Flow records carry no payload, so it is not confirmed whether any FTP login succeeded. No flow stood out with an unusually large reply.",
+    "Only 10 of the 2,469 related flows were scored by the model.",
+    "NAT hides the real external attacker IP(s) behind 172.16.0.1.",
+    "I did not search for CVEs because the asset record does not name the FTP server software or version."
+  ],
+  "model_prediction": {
+    "attack_probability": 0.9999381987009204,
+    "threshold": 0.0002419239107545048,
+    "predicted_family": "brute_force",
+    "model_name": "secops-detector",
+    "model_version": 1
+  },
+  "investigation_steps": [
+    "get_related_events({\"event_id\": 1110604, \"window_minutes\": 30}) -> E1 [ok]",
+    "get_asset({\"ip\": \"192.168.10.50\"}) -> E2 [ok]",
+    "enrich_ip({\"ip\": \"172.16.0.1\"}) -> E3 [ok]",
+    "predict_attack({\"event_ids\": [1267230, 1298193, 1288661, 1136011, 1171744, 1205191, 1266908, 1261648, 1279922, 1133081]}) -> E4 [ok]",
+    "lookup_attack_technique({\"technique_id\": \"T1110.001\"}) -> E5 [ok]"
+  ]
+}
