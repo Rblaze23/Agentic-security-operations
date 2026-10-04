@@ -163,6 +163,10 @@ def investigate(
         Path | None, typer.Option(help="Write the report JSON here instead of stdout.")
     ] = None,
     database_url: Annotated[str | None, typer.Option(help="Override SECOPS_DATABASE_URL.")] = None,
+    llm_critic: Annotated[
+        bool | None,
+        typer.Option("--llm-critic/--no-llm-critic", help="Override SECOPS_LLM_CRITIC."),
+    ] = None,
 ) -> None:
     """Run one investigation and print the triage report as JSON (summary on stderr)."""
     if (event_id is None) == (alert_json is None):
@@ -204,6 +208,7 @@ def investigate(
         critic=critic,
         tool_budget=budget or agent_settings.tool_budget,
         tracer=get_tracer(),
+        llm_critic=agent_settings.llm_critic if llm_critic is None else llm_critic,
     )
     result = run_investigation(alert, deps, investigation_id=scenario if mode != "live" else None)
 

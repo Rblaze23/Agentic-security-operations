@@ -44,26 +44,43 @@ def _mean(m: dict, key: str) -> float:
     return float(v["mean"]) if isinstance(v, dict) else float(v)
 
 
-def fig_agent_vs_baseline(agent: dict, baseline: dict) -> Path:
+def fig_agent_vs_baseline(agent: dict, baseline: dict, agent2: dict | None = None) -> Path:
     am, bm = agent["metrics"], baseline["metrics"]
     labels = [lbl for _, lbl in METRICS] + ["Composite"]
-    a = [_mean(am, k) for k, _ in METRICS] + [am["composite"]]
-    b = [_mean(bm, k) for k, _ in METRICS] + [bm["composite"]]
+    series = [
+        (
+            f"rule-based ({baseline['config']['run_id']})",
+            [_mean(bm, k) for k, _ in METRICS] + [bm["composite"]],
+        ),
+        (
+            f"agent, rules-only critic ({agent['config']['run_id']})",
+            [_mean(am, k) for k, _ in METRICS] + [am["composite"]],
+        ),
+    ]
+    if agent2 is not None:
+        a2 = agent2["metrics"]
+        series.append(
+            (
+                f"agent + model critic ({agent2['config']['run_id']})",
+                [_mean(a2, k) for k, _ in METRICS] + [a2["composite"]],
+            )
+        )
     x = range(len(labels))
-    fig, ax = plt.subplots(figsize=(9, 4))
-    ax.bar([i - 0.2 for i in x], b, 0.4, label=f"rule-based ({baseline['config']['run_id']})")
-    ax.bar([i + 0.2 for i in x], a, 0.4, label=f"agent ({agent['config']['run_id']})")
+    width = 0.8 / len(series)
+    fig, ax = plt.subplots(figsize=(10, 4.2))
+    for j, (name, vals) in enumerate(series):
+        offs = [i + (j - (len(series) - 1) / 2) * width for i in x]
+        ax.bar(offs, vals, width, label=name)
+        for o, v in zip(offs, vals, strict=True):
+            ax.text(o, v + 0.01, f"{v:.2f}", ha="center", fontsize=7)
     ax.set_xticks(list(x), labels, rotation=20)
-    ax.set_ylim(0, 1.05)
+    ax.set_ylim(0, 1.08)
     ax.set_ylabel("score (0–1)")
     ax.set_title(
         f"Agent vs rule-based baseline on golden set {agent['golden_version']} "
         f"({am['cases']} cases)"
     )
-    ax.legend(loc="lower right")
-    for i, (va, vb) in enumerate(zip(a, b, strict=True)):
-        ax.text(i + 0.2, va + 0.01, f"{va:.2f}", ha="center", fontsize=8)
-        ax.text(i - 0.2, vb + 0.01, f"{vb:.2f}", ha="center", fontsize=8)
+    ax.legend(loc="lower right", fontsize=8)
     fig.tight_layout()
     out = OUT / "agent_vs_baseline.png"
     fig.savefig(out, dpi=150)
@@ -166,14 +183,16 @@ def fig_detector(evaluation_md: Path) -> Path:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--agent", default="agent-v1-k1")
+    ap.add_argument("--agent", default="agent-nocritic-full", help="the default configuration")
+    ap.add_argument("--agent2", default="agent-v1-k1", help="the model-critic configuration")
     ap.add_argument("--baseline", default="baseline-rule-based")
     ap.add_argument("--k3", default="agent-v1-k3")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     agent, baseline = _load(args.agent), _load(args.baseline)
+    agent2 = _load(args.agent2) if (RUNS / f"{args.agent2}.json").exists() else None
     outs = [
-        fig_agent_vs_baseline(agent, baseline),
+        fig_agent_vs_baseline(agent, baseline, agent2),
         fig_verdict_by_kind(agent, baseline),
         fig_cost_latency(agent, baseline),
     ]

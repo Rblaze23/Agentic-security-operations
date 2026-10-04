@@ -45,18 +45,20 @@ def test_no_placeholders() -> None:
 def test_results_numbers_come_from_run_files() -> None:
     runs = {
         name: json.loads((ROOT / "evaluation" / "runs" / f"{name}.json").read_text())["metrics"]
-        for name in ("baseline-rule-based", "agent-v1-k1")
+        for name in ("baseline-rule-based", "agent-v1-k1", "agent-nocritic-full")
     }
     results = README[README.index("## 9. Results") : README.index("## 10. Security considerations")]
+    names = ("baseline-rule-based", "agent-v1-k1", "agent-nocritic-full")
     row = next(line for line in results.splitlines() if line.startswith("| Verdict accuracy |"))
-    for name in ("baseline-rule-based", "agent-v1-k1"):
+    for name in names:
         assert f"{runs[name]['verdict_accuracy']['mean']:.3f}" in row, name
     row = next(line for line in results.splitlines() if line.startswith("| Composite score |"))
-    for name in ("baseline-rule-based", "agent-v1-k1"):
+    for name in names:
         assert f"{runs[name]['composite']:.3f}" in row, name
     cost = next(line for line in results.splitlines() if line.startswith("| Cost per case"))
-    assert f"${runs['agent-v1-k1']['cost_per_case_usd']:.3f}" in cost
-    assert f"${runs['agent-v1-k1']['cost_total_usd']:.2f}" in cost
+    for name in ("agent-v1-k1", "agent-nocritic-full"):
+        assert f"${runs[name]['cost_per_case_usd']:.3f}" in cost
+        assert f"${runs[name]['cost_total_usd']:.2f}" in cost
     checks = {
         "| Family agreement |": lambda m: f"{m['family_agreement']['mean']:.3f}",
         "| Evidence recall / precision |": lambda m: f"{m['evidence_recall']['mean']:.3f}",
@@ -66,7 +68,7 @@ def test_results_numbers_come_from_run_files() -> None:
     }
     for prefix, fmt in checks.items():
         row = next(line for line in results.splitlines() if line.startswith(prefix))
-        for name in ("baseline-rule-based", "agent-v1-k1"):
+        for name in names:
             assert fmt(runs[name]) in row, (prefix, name, fmt(runs[name]))
     cap = next(line for line in results.splitlines() if line.startswith("| Cap hit"))
     assert f"{runs['agent-v1-k1']['loop_rate'] * 100:.1f} %" in cap

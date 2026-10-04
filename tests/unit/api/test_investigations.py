@@ -19,7 +19,13 @@ KEY = "k1"
 
 
 @pytest.fixture
-def client(service: Any, full_registry: ToolRegistry, tmp_path: Path) -> TestClient:
+def client(
+    service: Any, full_registry: ToolRegistry, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> TestClient:
+    monkeypatch.setenv("SECOPS_LLM_CRITIC", "true")  # the fixtures were recorded with the critic
+    from secops.agent.settings import get_agent_settings
+
+    get_agent_settings.cache_clear()
     settings = ApiSettings(
         api_keys=KEY,
         rate_limit_per_minute=0,

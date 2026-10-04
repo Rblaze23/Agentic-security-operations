@@ -68,6 +68,7 @@ def main() -> int:
                 SECOPS_AGENT_MODE="replay",
                 SECOPS_AGENT_FIXTURE_ROOT=str(ROOT / "tests" / "fixtures" / "llm"),
                 SECOPS_AGENT_SCENARIO="ftp_bruteforce",
+                SECOPS_LLM_CRITIC="true",  # the scenario was recorded with the critic
             )
         proc = subprocess.Popen(  # noqa: S603
             [sys.executable, "-m", "secops.api"],

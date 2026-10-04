@@ -110,3 +110,9 @@ def test_investigate_rejects_ambiguous_input(tmp_path: Path) -> None:
     assert res.exit_code != 0
     res = runner.invoke(cli.app, ["investigate", "--event-id", "1", "--alert-json", str(tmp_path)])
     assert res.exit_code != 0
+
+
+def test_llm_critic_setting_and_flag() -> None:
+    # default follows the Phase 5 measurement (docs/evaluation.md): rules-only critic
+    assert AgentSettings(ANTHROPIC_API_KEY=None).llm_critic is False  # type: ignore[call-arg]
+    assert AgentSettings(ANTHROPIC_API_KEY=None, SECOPS_LLM_CRITIC="true").llm_critic is True  # type: ignore[call-arg]

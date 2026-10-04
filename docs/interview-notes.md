@@ -368,6 +368,7 @@ fails the agent against the baseline on the composite (drop 0.024 > 0.02), which
 working. The ablation then isolates the cause: on the same 12 cases the rules-only critic
 reaches 0.917 verdict accuracy at $0.119 per case against 0.583 at $0.185 with the model
 critic, with grounding 1.000 and zero unsupported references either way, and the k = 3 run
-shows 9 of 12 cases flipping between the right verdict and human review across repeats. That
-result is in the README because the brief says it must be; the harness exists so the next
-prompt change is measured rather than believed.
+shows 9 of 12 cases flipping between the right verdict and human review across repeats. The
+full-set confirmation ($4.71) settled it: rules-only critic 0.921 verdict accuracy and 0.934
+composite against the baseline's 0.842 and 0.884, grounding 1.000, so the default changed on
+that evidence. The harness exists so a change like that is measured rather than believed.

@@ -551,6 +551,55 @@ that never flip are the ones the critic never rejected. Mean ± std over k = 3 i
 number to quote for this configuration, and "stable per repeat, unstable per case" is the
 shape of the problem.
 
+### Full-set confirmation: rules-only critic on all 38 cases (`agent-nocritic-full`, $4.708)
+
+### `baseline-rule-based` (baseline) vs `agent-nocritic-full` (candidate)
+
+| Metric | Baseline | Candidate | Delta |
+|---|---|---|---|
+| Composite score | 0.884 | 0.934 | +0.050 |
+| Verdict accuracy | 0.842 | 0.921 | +0.079 |
+| Family agreement | 0.737 | 0.789 | +0.053 |
+| Severity exact | 0.763 | 0.789 | +0.026 |
+| Severity within one | 1.000 | 1.000 | +0.000 |
+| Evidence recall | 0.921 | 1.000 | +0.079 |
+| Evidence precision | 0.954 | 1.000 | +0.046 |
+| Grounding rate | 1.000 | 1.000 | +0.000 |
+| Judge-supported rate | n/a | n/a |  |
+| Techniques found | 0.921 | 0.921 | +0.000 |
+| CVEs found | 0.947 | 1.000 | +0.053 |
+| Adversarial resisted | 1.000 | 1.000 | +0.000 |
+| Unsupported refs (total) | 0 | 0 | +0.000 |
+| Tool calls / case | 4.000 | 5.500 | +1.500 |
+| Unnecessary calls / case | 0.184 | 0.000 | -0.184 |
+| Loop rate (two critic rejections) | 0.000 | 0.000 | +0.000 |
+| Budget exhausted rate | 0.000 | 0.000 | +0.000 |
+| Failure rate | 0.000 | 0.000 | +0.000 |
+| Latency p50 (s) | 0.0 | 34.9 | +34.843 |
+| Latency p95 (s) | 0.2 | 48.1 | +47.890 |
+| Cost / case (USD) | $0.000 | $0.124 | +0.124 |
+| Cost total (USD) | $0.000 | $4.708 | +4.708 |
+
+- PASS `same_golden_set`: v1 vs v1
+- PASS `same_cases`: identical case sets
+- PASS `composite_drop`: drop -0.050 (max 0.02)
+- PASS `grounding_drop`: drop +0.000 (max 0.02)
+- PASS `cost_rise`: baseline cost is 0 (rule-based); gate skipped
+- PASS `unsupported_refs`: candidate has 0 (max 0)
+
+**Result: PASS**
+
+Reading: at full scale the rules-only configuration beats the rule-based baseline on the
+composite (+0.050) and on verdicts (0.921 vs 0.842: attacks 1.000, adversarial 1.000, benign
+false positives 0.500), keeps evidence recall, evidence precision and grounding at 1.000 and
+zero unsupported references, and costs $0.124 per case at 34.9 s p50. Against the model-critic
+run (`agent-v1-k1`) it is +0.263 verdict accuracy and −32 % cost with identical grounding. Its
+three remaining errors are all benign DoS-shaped bursts to internal hosts (two called true
+positive, one escalated), the hardest kind in the set and the one where the detector itself is
+wrong. On this evidence the default configuration is now the rules-only critic
+(`SECOPS_LLM_CRITIC=false`); `evaluation/baselines/latest.json` is this run, and
+`2026-10-04-model-critic.json` keeps the earlier accepted run for comparison.
+
 ### Cost of Phase 5
 
 | Run | Cases × repeats | Measured |
@@ -559,7 +608,8 @@ shape of the problem.
 | `regression-demo` | 5 × 1 | $0.482 |
 | `agent-v1-k3extra` | 12 × 2 | $4.309 |
 | `agent-nocritic-k1` | 12 × 1 | $1.432 |
+| `agent-nocritic-full` | 38 × 1 | $4.708 |
 | re-scores, replays, baseline, smoke CI | many | $0 |
-| **Total** | | **$13.18** (estimate given before the runs: $10–18) |
+| **Total** | | **$17.88** (estimates given before each run; the full-set confirmation was announced at about $4.50) |
 
 

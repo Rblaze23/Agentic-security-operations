@@ -132,6 +132,7 @@ class InvestigationManager:
                 critic=critic,
                 tool_budget=agent_settings.tool_budget,
                 tracer=get_tracer(),  # one tracer per investigation (Langfuse when configured)
+                llm_critic=agent_settings.llm_critic,
             )
             result = run_investigation(alert, deps, investigation_id=inv_id)
             self.repository().save(result)

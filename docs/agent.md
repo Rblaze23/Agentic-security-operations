@@ -163,6 +163,11 @@ uv run secops-agent recent
 ```
 
 `ANTHROPIC_API_KEY` is read from the environment or `.env` (never from code); replay needs no key.
+`SECOPS_LLM_CRITIC` (or `--llm-critic/--no-llm-critic`) switches the Sonnet critic after the
+deterministic rules on or off. The default is **off** since the Phase 5 measurement on the full
+golden set (verdict accuracy 0.921 vs 0.658 with the critic, grounding 1.000 either way,
+`docs/evaluation.md`); the four recorded scenarios and the API fixtures were recorded with it
+on and pin it explicitly.
 
 ## Limits and what Phase 5 measures
 
