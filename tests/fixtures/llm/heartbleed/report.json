@@ -1,8 +1,8 @@
 {
   "alert_id": "69fbcd18181d4acba3610e38c7b7fbe6",
   "verdict": "needs_human_review",
-  "attack_family": "heartbleed (detector family: web_attack)",
-  "severity": "high",
+  "attack_family": "rare_exploit",
+  "severity": "critical",
   "confidence": 0.0,
   "summary": "This alert is a true positive. It shows a Heartbleed-style exploit of the OpenSSL service on TCP 444 of ubuntu-server-12 (192.168.10.51), a high-criticality server. The traffic arrived from 172.16.0.1, the firewall's inside (NAT) address that external attacker traffic appears under. The anchor flow is one piece of a single long TLS session (source port 45022). It lasted about 119 seconds, with about 7.9 KB sent by the attacker and about 7.9 MB returned by the server. Across all related flows the server returned about 72 MB. That lopsided pattern of small requests and large replies matches CVE-2014-0160 memory leaks. Most neighbouring flows also alert. The detector calls this web_attack, but the evidence fits Heartbleed better.",
   "findings": [

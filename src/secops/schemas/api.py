@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from secops.schemas.agent import TriageReport
 from secops.schemas.alert import Alert
 from secops.schemas.prediction import Prediction
 
@@ -46,3 +47,34 @@ class ModelInfo(BaseModel):
     feature_spec_version: str
     threshold: float
     top_k: int
+
+
+class InvestigationRequest(BaseModel):
+    alert: Alert
+
+
+class InvestigationStatus(BaseModel):
+    investigation_id: str
+    alert_id: str
+    status: Literal["queued", "running", "done", "failed"]
+    verdict: str | None = None
+    severity: str | None = None
+    cost_usd: float | None = None
+    error: str | None = None
+    created_at: datetime | None = None
+
+
+class InvestigationDetail(InvestigationStatus):
+    report: TriageReport | None = None
+
+
+class EvaluationRunSummary(BaseModel):
+    run_id: str
+    investigator: str
+    finished_at: datetime | None
+    cases: int
+    repeats: int
+    composite: float
+    verdict_accuracy: float
+    grounding_rate: float
+    cost_total_usd: float

@@ -1,15 +1,35 @@
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: secops
+      POSTGRES_PASSWORD: ${SECOPS_POSTGRES_PASSWORD:-secops}
+      POSTGRES_DB: secops
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secops"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: .
       target: runtime
     image: secops-api:local
     env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       SECOPS_MODEL_DIR: /models
       SECOPS_PORT: "8000"
+      SECOPS_DATABASE_URL: postgresql+psycopg://secops:${SECOPS_POSTGRES_PASSWORD:-secops}@postgres:5432/secops
+      SECOPS_DATA_DIR: /data
     volumes:
       - ${SECOPS_MODEL_DIR:-${HOME}/data/secops/models}:/models:ro
+      - ${SECOPS_DATA_DIR:-${HOME}/data/secops}:/data:ro
     ports:
       - "8000:8000"
     read_only: true
@@ -21,3 +41,24 @@ services:
       timeout: 3s
       retries: 3
       start_period: 20s
+
+  dashboard:
+    build:
+      context: .
+      target: dashboard
+    image: secops-dashboard:local
+    profiles: ["ui"]
+    env_file: .env
+    environment:
+      SECOPS_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./evaluation:/app/evaluation:ro
+      - ./docs/figures:/app/docs/figures:ro
+
+volumes:
+  pgdata:

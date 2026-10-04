@@ -1,15 +1,16 @@
 # Agentic Security Operations Platform
 ML-powered intrusion detection and evidence-grounded agentic alert investigation
 
-> **Status: Phases 1–2 of 7 complete.** A supervised flow-level detector and an attack-family
-> classifier are trained, measured, explained, registered, and served by a typed FastAPI service
-> from self-contained model bundles, in a non-root container. Phases 3–7 (security tools,
-> LangGraph investigation agent, evaluation harness, productionisation, portfolio polish) are not
-> started. Nothing here claims to be deployed.
+> **Status: all seven phases implemented; every number below is measured.** A LightGBM flow
+> detector (test PR-AUC 0.9999, 6 % recall on an unseen botnet) is served by a typed FastAPI
+> service; seven read-only security tools sit over an indexed store of 1.7 M flows; a LangGraph
+> agent (Claude Opus 5.5 investigator, Sonnet 5.5 critic) turns an alert into an evidence-grounded
+> triage report; a 38-case golden set measures it against a rule-based baseline, and the baseline
+> currently wins on verdicts (0.842 vs 0.658) while the agent wins on evidence, grounding and
+> family; an ablation shows the model critic is the cause (0.917 without it on the same cases).
+> Cloud Run deployment is scripted and not yet performed (`docs/deployment.md`).
 
-## What this is
-
-A defensive security platform built end-to-end, phase by phase, with every number measured:
+## 1. Project overview
 
 ```
 network flows ──▶ detector (LightGBM) ──▶ alert ──▶ LangGraph investigation ──▶ triage report
@@ -17,21 +18,77 @@ network flows ──▶ detector (LightGBM) ──▶ alert ──▶ LangGraph 
                                                         │ asset/IP enrichment, CVE, ATT&CK,
                                                         │ and the detector itself
                                                         ▼
-                                              evaluation + regression gate + cost tracking
+                                              golden set + regression gate + cost tracking
 ```
 
-Design: `docs/superpowers/specs/2026-10-03-platform-architecture-design.md`.
-Phase 1 plan: `docs/superpowers/plans/2026-10-03-phase1-ml-detection-foundation.md`.
+Built end to end in seven phases, each with a written plan, tests first, a review, and measured
+results: dataset and detector (Phase 1), serving (2), tools (3), agent (4), evaluation (5),
+productionisation (6), this write-up (7). Design: `docs/superpowers/specs/2026-10-03-platform-architecture-design.md`;
+plans under `docs/superpowers/plans/`; interview-style explanations of every decision in
+`docs/interview-notes.md`; a two-minute demo in `docs/demo.md`.
 
-## Phase 1 results (measured 2026-10-03, MLflow run ids in `docs/evaluation.md`)
+## 2. Problem statement
+
+A flow-level intrusion detector can score 0.9999 PR-AUC on its own test split and still miss
+94 % of a botnet it has never seen (measured below). A score is not a triage decision: an analyst
+asks what else the source did, what the target is, whether the address is known, whether a
+vulnerability matches, and whether the neighbouring flows look the same. The platform automates
+that investigation with an agent that may only cite evidence returned by read-only tools, and
+measures whether the agent is worth its cost against rules that use the same tools.
+
+## 3. Why an agentic architecture
+
+Because the questions are the same every time but the answers are not: which tool matters
+depends on what the previous one returned. A deterministic pipeline (the Phase 5 baseline) asks
+the same four questions for every alert; the agent asks on average 5.6, cites the evidence it
+got, and reaches 100 % evidence recall where the rules reach 92 %. The claim that reasoning is
+worth paying for is tested, not asserted: `evaluation/runs/` holds both runs, and the honest
+reading is in section 9: the baseline wins on verdicts today, and the measured reason (an
+over-strict critic) is the first thing Phase 5's harness exists to fix.
+
+## 4. Architecture diagram
+
+```mermaid
+flowchart LR
+  subgraph data [Data and ML]
+    D[CIC-IDS-2017 DistriNet] --> P[clean / dedup / chrono split]
+    P --> T[LightGBM / XGBoost / LogReg<br/>MLflow runs + registry]
+    T --> B[model bundle<br/>estimator + spec + threshold + SHAP]
+  end
+  subgraph api [FastAPI service]
+    B --> API[/predict  /model  /health<br/>API keys + per-key rate limit/]
+    API --> AL[Alert: metadata + probability + family + SHAP]
+  end
+  subgraph agent [LangGraph investigation]
+    AL --> PL[plan] --> IN[investigate<br/>Opus 5.5, tool budget 12]
+    IN --> CR[critic<br/>rules + Sonnet 5.5] -->|rejected ≤2| IN
+    CR --> FI[finalize<br/>severity rubric] --> TR[TriageReport]
+  end
+  subgraph tools [Read-only tools]
+    IN --> ES[(event store<br/>1.7 M flows, SQLite/PostgreSQL)]
+    IN --> SE[assets / threat intel seeds]
+    IN --> NV[NVD CVE cache]
+    IN --> AT[ATT&CK v19.2 index]
+    IN --> DT[predict_attack]
+  end
+  TR --> DB[(investigations<br/>tool_calls)]
+  TR --> LF[Langfuse traces]
+  DB --> UI[Streamlit dashboard]
+  subgraph eval [Evaluation]
+    G[golden set v1<br/>38 test-split alerts] --> R[runner: agent / rule-based<br/>k repeats, record / replay]
+    R --> C[compare: composite, grounding,<br/>cost gates]
+  end
+```
+
+## 5. ML pipeline
 
 Dataset: CIC-IDS-2017 in the **DistriNet-corrected** version (KU Leuven), 2,099,976 flows →
 1,714,956 after exact-duplicate removal, 82 flow features, identifiers never used as features.
 Split: chronological within each (day, label) group, 70/15/15; threshold and champion chosen on
 validation only; test scored once. Details and data-quality findings: `docs/dataset.md`.
 
-**Binary detector** (test split, 257,252 flows, 16.5% attacks; operating point = max recall at
-validation FPR ≤ 1%):
+**Binary detector** (test split, 257,252 flows, 16.5 % attacks; operating point = max recall at
+validation FPR ≤ 1 %):
 
 | Model | Weighting | Test PR-AUC | Recall | FPR | Precision | Fit time |
 |---|---|---|---|---|---|---|
@@ -56,163 +113,210 @@ DDoS never appear in training, threshold reused unchanged from the champion:
 | Recall if the threshold were the conventional 0.5 | 1.3% |
 
 The in-distribution 0.9999 does not transfer: unseen command-and-control traffic is almost
-entirely missed, and DDoS is caught only because the operating threshold is tiny (0.00024). This is
-the measured argument for the rest of the platform: a flow-level score needs context (burst
-counts, asset criticality, known-bad addresses, vulnerability data) before it is a triage decision.
+entirely missed, and DDoS is caught only because the operating threshold is tiny (0.00024).
 
 **Ablations** (champion config, one variable changed): adding `Dst Port` as a feature raises test
 PR-AUC to 1.0000 and cuts missed attacks from 31 to 3, confirming the port is a testbed shortcut
-and justifying its exclusion. Dropping "Attempted" flows instead of relabelling them benign changes PR-AUC by less than 0.0001;
-the authors' recommended policy stays the default.
+and justifying its exclusion. Dropping "Attempted" flows instead of relabelling them benign
+changes PR-AUC by less than 0.0001. Top SHAP features of the champion: Bwd Packet Length Std,
+Packet Length Std, Bwd Init Win Bytes, Bwd Packet Length Mean. Full tables and MLflow run ids:
+`docs/evaluation.md`.
 
-Top SHAP features of the champion: Bwd Packet Length Std, Packet Length Std, Bwd Init Win Bytes,
-Bwd Packet Length Mean (response-side packet statistics).
+## 6. Agent workflow
 
-## Repository layout
+An alert becomes a triage report through a LangGraph state machine: **plan** (2–6 questions)
+→ **investigate** (Claude Opus 5.5 with the tools, budget 12 calls, append-only history, prompt
+caching on the system prompt and tool definitions) → **critic** (deterministic rules: every
+cited evidence id exists, every ATT&CK/CVE id came from the cited lookup, verdict consistent
+with findings, no instruction text; then Claude Sonnet 5.5 judges whether each observed
+finding follows from its evidence) → **finalize** (verdict, severity from a fixed rubric,
+uncertainties, cost). After two rejections the report is `needs_human_review`. Findings are
+typed `observed` / `model_prediction` / `inference`; severity and the success indicator come
+from evidence, never from the model. Every model call and tool output can be recorded and
+replayed, so four real scenarios and five golden cases run in CI at zero cost. Details:
+`docs/agent.md`.
 
+```bash
+uv run secops-agent investigate --event-id 1110604     # score the stored flow, investigate, persist
+uv run secops-agent show <investigation_id>
+uv run python scripts/demo.py                          # offline end-to-end demo over HTTP
 ```
-src/secops/
-  config.py            settings from environment (SECOPS_* variables)
-  data/                schema, manifest + download/verify, ingest, clean, split, build, CLI
-  detection/           feature spec, model factory, metrics, SHAP, plots, train, registry, bundle, CLI
-  schemas/             typed contracts: flow metadata + features, prediction, alert, API envelopes
-  api/                 FastAPI service: settings, API-key auth, DetectorService, routes, logging
-configs/               data defaults and one YAML per experiment
-scripts/               docker_smoke.py (container smoke test used by CI)
-tests/                 unit (no real data), integration (986-row fixture), fixtures
-docs/                  dataset.md, evaluation.md, interview-notes.md, design spec and plan
-data/README.md         dataset source, terms, hashes, citations
-```
 
-## Local setup
+## 7. Tool architecture
+
+Seven read-only, typed tools (Pydantic input and output models, bounded windows and limits,
+no shell, file or URL parameters): `search_events` and `get_related_events` over an indexed
+event store (SQLAlchemy + Alembic; SQLite locally, PostgreSQL in Compose), `get_asset` and
+`enrich_ip` from the documented testbed seeds, `lookup_cve` from NVD with a cache and rate
+limiter, `lookup_attack_technique` from the official ATT&CK v19.2 bundle, and `predict_attack`,
+the detector itself on stored flows. Every output names its source, external text is flagged
+`untrusted_text`, and a registry test proves no tool exposes a ground-truth label. Measured:
+`search_events` p50 1.2 ms; `get_related_events` ±5 min p50 32 ms, p95 510 ms on DoS bursts.
+Details: `docs/tools.md`.
+
+## 8. Evaluation methodology
+
+A versioned golden set (`evaluation/golden/v1.json`, 38 alerts from the chronological test
+split: four attacks per family, the six benign flows the detector scores highest, four
+adversarial copies with "ignore all previous instructions" injected into CVE descriptions and
+asset notes) with expectations derived from the labels, the family map and the severity rubric,
+never hand-written. Per case: verdict, family, severity (exact and within one), evidence recall
+and precision over tool payloads, grounding, unsupported ids, a Sonnet judge, tool calls, cap
+hits, latency, cost. k repeats give mean ± std and a flaky-case list. `secops-eval compare`
+applies gates (composite drop ≤ 0.02, grounding drop ≤ 0.02, cost rise ≤ 25 %, zero unsupported
+references, identical case sets) and exits non-zero. CI replays five recorded cases at zero cost;
+the full live run is a manual workflow. Details: `docs/evaluation.md` (Phase 5 section).
+
+## 9. Results
+
+**Agent vs rule-based baseline on golden set v1** (38 cases, 2026-10-04; `evaluation/runs/baseline-rule-based.json`, `evaluation/runs/agent-v1-k1.json`):
+
+| Metric | Rule-based baseline | Agent (Opus 5.5 + Sonnet critic) |
+|---|---|---|
+| Composite score | **0.884** | 0.861 |
+| Verdict accuracy | **0.842** | 0.658 |
+| Verdict accuracy: attacks (28) | **0.964** | 0.786 |
+| Verdict accuracy: benign false positives (6) | 0.167 | **0.333** |
+| Verdict accuracy: adversarial (4) | **1.000** | 0.250 |
+| Adversarial injection resisted (no flip, no restatement, grounded) | 1.000 | 1.000 |
+| Family agreement | 0.737 | **0.816** |
+| Severity exact / within one | 0.763 / 1.000 | **0.816** / 1.000 |
+| Evidence recall / precision | 0.921 / 0.954 | **1.000 / 0.996** |
+| Grounding rate (cited ids exist) | 1.000 | 1.000 |
+| Judge-supported observed findings | n/a | 0.892 |
+| Techniques / CVEs found | 0.921 / 0.947 | 0.895 / **1.000** |
+| Unsupported ATT&CK/CVE ids | 0 | 0 |
+| Tool calls per case (unnecessary) | 4.0 (0.18) | 5.6 (0.03) |
+| Cap hit (two critic rejections) | 0.0 % | 28.9 % |
+| Latency p50 / p95 | 0.0 s / 0.2 s | 49.5 s / 60.0 s |
+| Cost per case / total | $0 | $0.183 / $6.95 |
+
+**Reading.** The agent is better at everything that touches evidence (recall, precision,
+family, severity, zero unnecessary calls, every adversarial injection resisted) and worse at
+the verdict, and the gap has one measured cause: 11 of its 13 wrong verdicts are
+`needs_human_review` forced by two critic rejections. The regression gate correctly fails the
+agent against the baseline (composite drop 0.024 > 0.02).
+
+**Ablation: the model critic removed** (same 12 cases, `evaluation/runs/agent-v1-k1-subset12.json` vs `agent-nocritic-k1.json`):
+
+| Metric | With Sonnet critic | Rules-only critic |
+|---|---|---|
+| Verdict accuracy | 0.583 | **0.917** |
+| Composite | 0.842 | **0.942** |
+| Grounding / unsupported refs / evidence recall | 1.000 / 0 / 1.000 | 1.000 / 0 / 1.000 |
+| Adversarial resisted | 1.000 | 1.000 |
+| Two-rejection loop rate | 0.333 | 0.000 |
+| Latency p50 | 52.6 s | **31.1 s** |
+| Cost per case | $0.185 | **$0.119** |
+
+The deterministic critic rules catch what the fixtures were built to catch; the model critic,
+as prompted today, removes a third of the correct verdicts and adds nothing to grounding. That
+is the single most useful number this project produced, and it came from the harness, not from
+reading transcripts.
+
+**Reliability** (`agent-v1-k3.json`, 12 cases × 3 repeats, $6.53): verdict accuracy 0.583 ±
+0.000 across repeats, yet 9 of 12 cases change verdict between repeats, nearly always between
+the right verdict and `needs_human_review`: the critic loop decides differently on the same
+draft. Per-case verdicts are in `docs/evaluation.md`.
+
+**Four recorded scenarios** (Phase 4, replayable in CI): FTP brute force true positive / high
+with T1110.001; internal port scan true positive / low with T1046; the Heartbleed flow found
+CVE-2014-0160 and T1190 but ended in human review; a benign Monday flow ended in human review.
+$0.748 for the four (`docs/agent.md`).
+
+Figures generated from the run files by `scripts/make_figures.py` are in `docs/figures/`.
+
+## 10. Security considerations
+
+Settings and keys come from environment variables only; `.env` is git-ignored; `gitleaks`,
+`bandit` and `pip-audit` run in CI. The API authenticates every inference and agent route with
+a constant-time API-key check, fails closed when no key is configured, rate-limits per key
+(`429` + `Retry-After`), refuses oversized requests before reading the body, validates every
+field, never echoes input values, and runs as a non-root user in a read-only container. Tools
+are read-only with typed, bounded inputs and no ground-truth fields; external text is flagged
+untrusted and the critic rejects instruction-like findings; the paid agent endpoint is
+idempotent per alert and disabled on the public deployment. Model bundles are cloudpickle and
+therefore a code-execution trust boundary built from the same lockfile as the image. The threat
+model by phase: `docs/security.md`.
+
+## 11. MLOps
+
+MLflow tracks every training run (parameters, metrics including per-label recall at fixed FPRs,
+PR curve, confusion matrix, SHAP summary, feature spec, threshold sweep, model) and the registry
+holds the champions behind aliases; `secops-train export` writes self-contained bundles the API
+serves without MLflow. On the agent side: every investigation persists its tokens, cost, models
+and prompt version (migration 0002), the CLI prints cost after each run and the evaluation
+prints it before, Langfuse tracing is wired through an optional tracer (not yet exercised
+against an instance), and `secops-eval compare` is the regression gate. Retraining and drift
+monitoring are future work (section 16).
+
+## 12. Local setup
 
 Requirements: Python 3.12 via [uv](https://docs.astral.sh/uv/), 8 GB RAM for the full build,
 `libgomp1` for LightGBM on Debian/Ubuntu, GNU make (optional; every target is a one-line `uv run`).
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-cp .env.example .env            # set SECOPS_DATA_DIR to a Linux-native path
+cp .env.example .env            # SECOPS_DATA_DIR on a Linux-native path; ANTHROPIC_API_KEY for live runs
 make setup                      # uv sync --all-groups && pre-commit install
 make test                       # ruff, mypy, unit tests, integration tests on the fixture
-```
-
-On WSL, keep the repository anywhere but put `SECOPS_DATA_DIR` and the virtual environment on the
-Linux filesystem: `/mnt/*` cannot create the symlinks uv needs, so the Makefile exports
-`UV_PROJECT_ENVIRONMENT=$HOME/.venvs/secops`.
-
-### Data and training
-
-```bash
 export SECOPS_DATA_DIR=$HOME/data/secops
-make data-download              # 344 MB zip, verified by SHA-256; extracts and verifies 5 CSVs
-make data-build                 # ~1 min and 5 GB RAM per policy; writes Parquet + JSON reports
-make train-all                  # binary (6 runs), family (4), held-out (1), ablations (2)
-make mlflow-ui                  # browse runs, artifacts, registered models
-uv run secops-train report --experiment secops/detection-binary
+make data-download && make data-build && make train-all     # dataset, Parquet, 13 MLflow runs
+make export-models && make load-events && make fetch-attack  # bundles, event store, ATT&CK index
+make compose-up                 # postgres + api
+make dashboard                  # Streamlit at :8501 (uv sync --group dashboard)
 ```
 
-Each run logs parameters, metrics (including per-label recall and recall at fixed FPRs), the
-PR curve, confusion matrix, SHAP summary, feature spec, threshold, a threshold sweep with per-label
-recall, a false-positive breakdown, an explainer background sample, and the model;
-`secops-train promote-best` applies the documented champion rule (best validation metric, ties
-within 0.0005 to the simpler model, then lower validation FPR) and moves the `champion` alias.
+On WSL keep `SECOPS_DATA_DIR` and the virtual environment on the Linux filesystem
+(`UV_PROJECT_ENVIRONMENT=$HOME/.venvs/secops`).
 
-## Serving (Phase 2)
+## 13. API documentation
 
-The champions are served by a FastAPI service from a **model bundle**: `secops-train export`
-resolves the registry alias once and writes a self-contained directory (estimator, feature spec,
-threshold, class order, SHAP background sample, provenance with the run's measured metrics). The
-API loads bundles from `SECOPS_MODEL_DIR` and never talks to MLflow. Contract, error table and
-bundle format: `docs/api.md`.
-
-```bash
-make export-models                       # -> $SECOPS_MODEL_DIR/{detector,family}
-export SECOPS_API_KEYS=dev-key
-make api                                 # http://localhost:8000
-curl -s -H "X-API-Key: dev-key" localhost:8000/model | jq .detector.metrics.test_pr_auc
-make docker-build && make compose-up     # same service in a non-root container
-```
-
-| Endpoint | What it returns |
+| Endpoint | What it does |
 |---|---|
-| `POST /predict`, `POST /predict/batch` (≤ 1,000) | attack probability, the bundle's operating threshold, `is_alert`, attack family (alerts only), top-5 SHAP contributions, and an `Alert` object for rows above threshold |
+| `POST /predict`, `POST /predict/batch` (≤ 1,000) | attack probability, operating threshold, `is_alert`, family (alerts only), top-5 SHAP, and an `Alert` for rows above threshold |
 | `GET /model` | bundle provenance and the training run's logged metrics |
 | `GET /health` | readiness, open (no key) |
+| `POST /investigations` | start a LangGraph investigation in the background, `202`, idempotent per alert |
+| `GET /investigations/{id}`, `GET /investigations` | status, verdict, severity, cost and the full triage report |
+| `GET /evaluation/runs` | one summary per evaluation run file |
 
-Requests carry flow metadata (IPs, ports, timestamp) separately from the exactly-82-name feature
-dictionary; metadata is never used as a feature. Latency, one flow per request including SHAP:
-in-process p50 8.0 ms / p95 9.3 ms on the fixture bundle; 15–26 ms HTTP round trip to the
-container serving the real champions, whose probabilities match the in-process service exactly
-(`docs/api.md`, "Measured").
+Measured serving latency, one flow with SHAP: in-process p50 8.0 ms / p95 9.3 ms; 15–26 ms over
+HTTP to the container. Contract, errors, bundle format and the Phase 6 additions: `docs/api.md`.
 
-## Agent tools (Phase 3)
+## 14. Deployment
 
-Seven read-only, typed tools give the investigation agent real evidence to cite: event search
-and neighbourhood aggregation over an event store holding all 1.7 M flows (SQLAlchemy + Alembic,
-SQLite now, PostgreSQL later), asset and IP enrichment from the documented testbed, CVE lookup
-from NVD with a cache and rate limiter, MITRE ATT&CK technique lookup from the official STIX
-bundle (v19.2), and the detector as a tool. Every output names its source, external text is
-flagged untrusted, and a registry test proves no tool exposes a ground-truth label. Details:
-`docs/tools.md`; threat model: `docs/security.md`.
+Local: `make compose-up` (api + postgres, read-only mounts of the bundles and data), `make
+compose-ui` for the dashboard (image built from the lockfile; container answers its health
+check), `make docker-smoke` builds the API image (1.69 GB) and checks `/health` and `/predict`
+in the container. Cloud Run: `deploy/cloudrun.md` and
+`scripts/deploy_cloud_run.sh` build the `cloudrun` image target with the bundles baked in and
+deploy the detection service (agent endpoints disabled, keys from Secret Manager);
+`scripts/verify_deployment.py` prints the verification table. **Status: no Cloud Run deployment
+has been performed yet** (`docs/deployment.md`); it needs the maintainer's `gcloud auth login`.
 
-```bash
-make load-events     # 1.7 M flows -> $SECOPS_DATA_DIR/events.db (migration applied first)
-make fetch-attack    # ATT&CK STIX bundle -> technique index
-```
-
-## Investigation agent (Phase 4)
-
-An alert becomes an evidence-grounded triage report through a LangGraph state machine:
-plan → investigate → critic → finalize. Claude Opus 5.5 plans and investigates with the Phase 3
-tools (budget 12 calls); a deterministic critic plus Claude Sonnet 5.5 reject any finding that
-cites evidence the tools did not return; after two rejections the report is finalized as
-`needs_human_review`. Severity comes from a fixed rubric, never from the model. Every model call
-can be recorded and replayed, so the four real scenarios run in CI at zero cost. Details and the
-measured table: `docs/agent.md`.
-
-```bash
-uv run secops-agent investigate --event-id 1110604     # score the stored flow, investigate, persist
-uv run secops-agent show <investigation_id>
-uv run python scripts/record_agent_scenarios.py        # dry run; --go re-records the four scenarios
-```
-
-Measured on the four recorded scenarios (2026-10-04, Opus 5.5 investigator, Sonnet 5.5 critic):
-
-| Scenario | Event | Verdict | Severity | Family | Conf. | Tool calls | Critic rejections | LLM calls (Opus + Sonnet) | Opus input tokens (incl. cache reads) | Cache-read share | Opus output tokens | Cost | Wall-clock |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `ftp_bruteforce` | 1110604 | true_positive | high | brute_force | 0.95 | 5 | 0 | 4 + 1 | 25,977 | 51% | 2,607 | $0.122 | 34 s |
-| `internal_portscan` | 3083227 | true_positive | low | port_scan | 0.90 | 5 | 1 | 5 + 2 | 40,082 | 44% | 4,487 | $0.210 | 50 s |
-| `benign_high_score` | 357329 | needs_human_review | low | port_scan | 0.00 | 4 | 2 | 5 + 2 | 35,592 | 50% | 3,705 | $0.167 | 47 s |
-| `heartbleed` | 2251110 | needs_human_review | high | heartbleed (detector family: web_attack) | 0.00 | 7 | 2 | 5 + 2 | 46,766 | 38% | 5,047 | $0.249 | 56 s |
-
-Both true positives were found and grounded (T1110.001 and T1046 cited from the ATT&CK lookup).
-The benign flow and the Heartbleed flow (CVE-2014-0160 found) ended as `needs_human_review`:
-the investigator's drafts had the right verdicts, but the critic rejected them twice for
-over-strict grounding objections. That is the safe failure mode, and the critic's precision is
-what Phase 5 measures first. Total recorded cost $0.748.
-
-## Security considerations
-
-Settings and API keys come from environment variables only; `.env` is git-ignored; `gitleaks`
-runs in pre-commit; dataset files and model bundles never enter git. The API authenticates every
-inference route with a constant-time API-key check and fails closed when no key is configured,
-refuses unauthenticated and oversized requests before reading the body, validates every field
-(exact feature-name set, bounded batches, finite numbers, no unknown fields), never echoes input
-values in error bodies, binds to loopback outside the container, and runs as a non-root user in a
-read-only container. Model bundles are cloudpickle and are therefore a code-execution trust boundary: they
-are built from the same lockfile as the image and mounted read-only. Rate limiting, persistence,
-tracing and the agent's tool boundaries arrive with Phases 3–6.
-
-## Limitations (Phase 1)
+## 15. Limitations
 
 - One testbed, one week of 2017 traffic, profile-generated benign flows: numbers are not
-  transferable to another network without re-measurement.
-- The primary split tests the *end* of each attack burst after training on its start; it is easy by
-  construction. Quote the held-out-Friday numbers for generalisation.
-- Validation is used both for early stopping and for the threshold (documented optimism).
-- `web_attack` (104 rows) and `rare_exploit` (47 rows) are too small for reliable per-class
-  metrics; the latter is excluded from the family classifier.
-- Deduplication removes scan *volume*; the detector learns the shape of a probe, not the count.
+  transferable to another network without re-measurement; the primary split is easy by
+  construction, quote the held-out-Friday numbers for generalisation.
+- The agent currently loses to the rule-based baseline on verdict accuracy because the model
+  critic is too strict: the ablation shows 0.917 without it against 0.583 with it on the same 12
+  cases, and 9 of those 12 flip verdicts between repeats. The default configuration still runs
+  the model critic because changing the default is the next measured experiment, not a hunch.
+  The golden set is small (38) and k = 3 runs only on a 12-case subset.
+- `web_attack` and `rare_exploit` are too small for reliable per-class metrics; deduplication
+  removes scan volume; `predict_attack` output is truncated at 4,000 characters.
+- Single-process API: the rate limiter and the investigation idempotency are in-memory; the
+  Langfuse tracer is wired per investigation but has not been verified against an instance;
+  `model_predictions` is schema only; Cloud Run is scripted, not deployed.
+
+## 16. Future work
+
+`docs/future-work.md`: critic precision measured on the golden set, a deployed agent with Cloud
+SQL, shared rate-limit store and investigation queue, compact tool payload rendering, the
+single-pass related-events query, retraining and drift monitoring on the persisted predictions,
+Langfuse verification, more benign and Friday-family golden cases.
 
 ## Citations
 
@@ -223,15 +327,24 @@ CIC-IDS-2017 and CSE-CIC-IDS-2018.* IEEE CNS 2022.
 Engelen, Rimmer, Joosen. *Troubleshooting an Intrusion Detection Dataset: the CICFlowMeter and its
 flaw.* WTMC 2021.
 
-## Roadmap
+## Repository layout and roadmap
+
+```
+src/secops/   config, data, detection, schemas, api, db, tools, agent, evaluation, observability
+dashboard/    Streamlit app (optional group)
+scripts/      demo, figures, scenario recording, deployment, smoke tests
+evaluation/   golden/v1.json, runs/*.json, baselines/
+tests/        unit (fixture data only), integration (fixture + PostgreSQL), llm (opt-in live)
+docs/         dataset, evaluation, api, tools, agent, security, deployment, demo, dashboard, future-work, interview-notes
+```
 
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Architecture, dataset choice, evaluation strategy | done |
 | 1 | Dataset pipeline, baselines, MLflow, SHAP, registry | done |
 | 2 | FastAPI detection service, typed schemas, model bundles, Docker | done |
-| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | **done** except the detector tool (in progress) |
-| 4 | LangGraph investigation agent with critic and loop limits | **done** |
-| 5 | Golden set, agent evaluation harness, regression gate, cost tracking | not started |
-| 6 | PostgreSQL, Langfuse, auth, CI/CD, Compose, Cloud Run | not started |
-| 7 | Diagrams, demo, portfolio polish | not started |
+| 3 | Security tools: event search, correlation, enrichment, CVE, ATT&CK, detector-as-tool | done |
+| 4 | LangGraph investigation agent with critic and loop limits | done |
+| 5 | Golden set, agent evaluation harness, regression gate, cost tracking | done |
+| 6 | PostgreSQL, Langfuse, auth, CI/CD, Compose, Cloud Run | done except the Cloud Run deploy itself (maintainer's gcloud) |
+| 7 | Diagrams, demo, dashboard, portfolio polish | done |

@@ -10,14 +10,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
 import anthropic
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
-from secops.schemas.agent import UsageTotals
+from secops.agent.fixtures import count_entries, read_entries, write_entry
+from secops.schemas.agent import UsageTotals, price_usd
 
 Mode = Literal["live", "record", "replay"]
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
@@ -52,6 +54,7 @@ class LLMResponse(BaseModel):
     content: list[dict[str, Any]]
     usage: Usage
     parsed: dict[str, Any] | None = None
+    parse_error: str | None = None  # set when the text did not validate against output_model
     request_id: str | None = None
     tool_uses: list[dict[str, Any]] = Field(default_factory=list)
 
@@ -128,6 +131,7 @@ class LLM:
         usage: UsageTotals | None = None,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         timeout: float = 120.0,
+        compress: bool = False,
     ) -> None:
         if mode not in ("live", "record", "replay"):
             raise ValueError(f"unknown mode {mode!r}")
@@ -137,6 +141,8 @@ class LLM:
         self.effort: Effort = effort
         self.mode: Mode = mode
         self.fixture_dir = Path(fixture_dir) if fixture_dir else None
+        self.compress = compress
+        self.tracer: Any | None = None  # secops.observability.Tracer, set per investigation
         self.max_tokens = max_tokens
         self.usage = usage if usage is not None else UsageTotals()
         self._client = client
@@ -150,6 +156,7 @@ class LLM:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         output_model: type[BaseModel] | None = None,
+        tool_choice: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         req: dict[str, Any] = {
             "model": self.model,
@@ -162,6 +169,8 @@ class LLM:
             tools = [dict(t) for t in tools]
             tools[-1]["cache_control"] = {"type": "ephemeral"}
             req["tools"] = tools
+            if tool_choice is not None:
+                req["tool_choice"] = tool_choice
         if output_model is not None:
             req["output_config"]["format"] = {
                 "type": "json_schema",
@@ -176,9 +185,11 @@ class LLM:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         output_model: type[BaseModel] | None = None,
+        tool_choice: dict[str, Any] | None = None,
     ) -> LLMResponse:
-        req = self.build_request(system, messages, tools, output_model)
+        req = self.build_request(system, messages, tools, output_model, tool_choice)
         key = request_fingerprint(req)
+        started = time.perf_counter()
         if self.mode == "replay":
             raw = self._load_fixture(key)
         else:
@@ -193,15 +204,40 @@ class LLM:
             cache_read_tokens=response.usage.cache_read_tokens,
             cache_write_tokens=response.usage.cache_write_tokens,
         )
+        if self.tracer is not None:
+            self.tracer.llm_call(
+                response.model,
+                response.request_id,
+                response.usage.input_tokens,
+                response.usage.output_tokens,
+                response.usage.cache_read_tokens,
+                (time.perf_counter() - started) * 1000.0,
+                price_usd(
+                    response.model,
+                    input_tokens=response.usage.input_tokens,
+                    output_tokens=response.usage.output_tokens,
+                    cache_read_tokens=response.usage.cache_read_tokens,
+                    cache_write_tokens=response.usage.cache_write_tokens,
+                ),
+            )
         if response.stop_reason == "refusal":
             details = raw.get("stop_details") or {}
             raise LLMRefusalError(details.get("category"), details.get("explanation"))
         if response.stop_reason == "max_tokens":
             raise LLMTruncatedError("response hit max_tokens")
         if output_model is not None and response.stop_reason != "tool_use":
-            response.parsed = output_model.model_validate_json(response.text).model_dump(
-                mode="json"
-            )
+            try:
+                response.parsed = output_model.model_validate_json(response.text).model_dump(
+                    mode="json"
+                )
+            except ValidationError as e:
+                # The API grammar cannot express every Pydantic rule (sanitize_schema drops
+                # them), so a syntactically valid object can still fail validation. The caller
+                # decides how to recover; the tokens were spent and the usage is already booked.
+                response.parse_error = f"{e.error_count()} validation error(s): " + "; ".join(
+                    f"{'.'.join(str(x) for x in err['loc'])}: {err['msg']}"
+                    for err in e.errors()[:3]
+                )
         return response
 
     def _client_or_default(self) -> Any:
@@ -240,20 +276,18 @@ class LLM:
     # ---- fixtures ---------------------------------------------------------------------------
     def _store_fixture(self, key: str, req: dict[str, Any], raw: dict[str, Any]) -> None:
         assert self.fixture_dir is not None
-        self.fixture_dir.mkdir(parents=True, exist_ok=True)
-        n = len(list(self.fixture_dir.glob("*.json"))) + 1
-        (self.fixture_dir / f"{n:03d}.json").write_text(
-            json.dumps(
-                {
-                    "request_hash": key,
-                    "model": self.model,
-                    "captured_at": datetime.now(UTC).isoformat(),
-                    "request": req,
-                    "response": raw,
-                },
-                indent=1,
-                default=str,
-            )
+        n = count_entries(self.fixture_dir) + 1
+        write_entry(
+            self.fixture_dir,
+            f"{n:03d}",
+            {
+                "request_hash": key,
+                "model": self.model,
+                "captured_at": datetime.now(UTC).isoformat(),
+                "request": req,
+                "response": raw,
+            },
+            compress=self.compress,
         )
         self._fixtures = None
 
@@ -261,9 +295,8 @@ class LLM:
         assert self.fixture_dir is not None
         if self._fixtures is None:
             self._fixtures = {}
-            for p in sorted(self.fixture_dir.glob("*.json")):
-                entry = json.loads(p.read_text())
-                self._fixtures[entry["request_hash"]] = entry
+            for recorded in read_entries(self.fixture_dir):
+                self._fixtures[recorded["request_hash"]] = recorded
         entry = self._fixtures.get(key)
         if entry is None:
             raise UnrecordedRequestError(

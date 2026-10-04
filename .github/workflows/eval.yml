@@ -1,0 +1,45 @@
+name: eval
+# Full live evaluation of the investigation agent against the golden set. It costs money
+# (about $8 per full run at 2026-10-04 prices) and needs the event store and the exported
+# model bundles, which the hosted runner does not have until Phase 6 provides a data volume.
+# Until then it runs manually from a machine that has both. The schedule stays commented out
+# so the repository never claims a nightly run that does not happen.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Name of the run (evaluation/runs/<run_id>.json)
+        required: true
+        default: agent-nightly
+      repeats:
+        description: Repeats per case (k)
+        required: true
+        default: "1"
+  # schedule:
+  #   - cron: "0 3 * * *"
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      SECOPS_DATA_DIR: ${{ github.workspace }}/data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-groups
+      - name: Data volume
+        run: |
+          echo "The event store (events.db) and model bundles must be provided at $SECOPS_DATA_DIR"
+          echo "(Phase 6 wires a data volume; until then run this workflow from a prepared machine)."
+          test -f "$SECOPS_DATA_DIR/events.db"
+      - run: uv run secops-eval run --run-id "${{ inputs.run_id }}" --investigator agent --mode live --repeats "${{ inputs.repeats }}" --judge
+      - name: Regression gate against the accepted baseline
+        run: uv run secops-eval compare evaluation/baselines/latest.json "evaluation/runs/${{ inputs.run_id }}.json" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-run
+          path: evaluation/runs/

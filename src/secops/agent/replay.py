@@ -13,6 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from secops.agent.fixtures import count_entries, read_entries, write_entry
 from secops.tools.base import ToolSpec
 from secops.tools.registry import ToolRegistry
 
@@ -26,32 +27,33 @@ def call_key(name: str, inp: BaseModel) -> str:
     return hashlib.sha256(f"{name}\n{args}".encode()).hexdigest()
 
 
-def recording_registry(base: ToolRegistry, directory: Path) -> ToolRegistry:
+def recording_registry(base: ToolRegistry, directory: Path, compress: bool = False) -> ToolRegistry:
     directory.mkdir(parents=True, exist_ok=True)
-    counter = {"n": len(list(directory.glob("*.json")))}
+    counter = {"n": count_entries(directory)}
     out = ToolRegistry()
     for spec in base.all():
-        out.register(_recording_spec(spec, directory, counter))
+        out.register(_recording_spec(spec, directory, counter, compress))
     return out
 
 
-def _recording_spec(spec: ToolSpec, directory: Path, counter: dict[str, int]) -> ToolSpec:
+def _recording_spec(
+    spec: ToolSpec, directory: Path, counter: dict[str, int], compress: bool
+) -> ToolSpec:
     real = spec.run
 
     def run(inp: BaseModel) -> BaseModel:
         result = real(inp)
         counter["n"] += 1
-        (directory / f"{counter['n']:03d}_{spec.name}.json").write_text(
-            json.dumps(
-                {
-                    "key": call_key(spec.name, inp),
-                    "tool": spec.name,
-                    "arguments": inp.model_dump(mode="json"),
-                    "output": result.model_dump(mode="json"),
-                },
-                indent=2,
-                default=str,
-            )
+        write_entry(
+            directory,
+            f"{counter['n']:03d}_{spec.name}",
+            {
+                "key": call_key(spec.name, inp),
+                "tool": spec.name,
+                "arguments": inp.model_dump(mode="json"),
+                "output": result.model_dump(mode="json"),
+            },
+            compress=compress,
         )
         return result
 
@@ -61,8 +63,7 @@ def _recording_spec(spec: ToolSpec, directory: Path, counter: dict[str, int]) ->
 def replay_registry(base: ToolRegistry, directory: Path) -> ToolRegistry:
     """`base` supplies the input/output models (any registry built from the same code)."""
     recorded: dict[str, dict[str, Any]] = {}
-    for path in sorted(directory.glob("*.json")):
-        entry = json.loads(path.read_text())
+    for entry in read_entries(directory):
         recorded.setdefault(entry["key"], entry)  # first occurrence wins, like a cache
     out = ToolRegistry()
     for spec in base.all():

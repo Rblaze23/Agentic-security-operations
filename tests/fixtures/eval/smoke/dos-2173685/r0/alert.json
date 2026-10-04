@@ -1,0 +1,69 @@
+{
+  "alert_id": "a38dffb369e847cdb6d8b4ce15c9fc2f",
+  "event_id": "2173685",
+  "metadata": {
+    "timestamp": "2017-07-05T13:58:24.941739Z",
+    "source_ip": "172.16.0.1",
+    "destination_ip": "192.168.10.50",
+    "source_port": 42406,
+    "destination_port": 80,
+    "protocol": 6
+  },
+  "prediction": {
+    "prediction_id": "77e58fe7d07d4c658c0fae99cd878ecf",
+    "event_id": "2173685",
+    "model_name": "secops-detector",
+    "model_version": 1,
+    "run_id": "dcc36c43a75749eab6c77e55e79cf837",
+    "feature_spec_version": "v1-noport",
+    "attack_probability": 0.9999646560008831,
+    "threshold": 0.0002419239107545048,
+    "is_alert": true,
+    "predicted_family": "dos",
+    "family_probabilities": {
+      "botnet": 5.760617244969535e-9,
+      "brute_force": 5.357377425540858e-8,
+      "ddos": 6.003790437629127e-7,
+      "dos": 0.9999992786028985,
+      "port_scan": 6.024189428939582e-8,
+      "web_attack": 1.441771972663525e-9
+    },
+    "top_contributions": [
+      {
+        "feature": "Bwd Packet Length Std",
+        "value": 2120.732177734375,
+        "shap_value": 11.101965350211833
+      },
+      {
+        "feature": "Packet Length Std",
+        "value": 1621.5413818359375,
+        "shap_value": 2.4601289247688127
+      },
+      {
+        "feature": "Bwd Bulk Rate Avg",
+        "value": 39982760.0,
+        "shap_value": 1.0016910210587486
+      },
+      {
+        "feature": "Bwd Init Win Bytes",
+        "value": 235.0,
+        "shap_value": 0.8428033491228605
+      },
+      {
+        "feature": "Bwd Packet Length Mean",
+        "value": 1656.4285888671875,
+        "shap_value": 0.6487101636146728
+      }
+    ],
+    "timestamp": "2026-10-04T08:50:03.270201Z",
+    "latency_ms": 8.975534001365304
+  },
+  "key_features": {
+    "Bwd Packet Length Std": 2120.732177734375,
+    "Packet Length Std": 1621.5413818359375,
+    "Bwd Bulk Rate Avg": 39982760.0,
+    "Bwd Init Win Bytes": 235.0,
+    "Bwd Packet Length Mean": 1656.4285888671875
+  },
+  "status": "new"
+}

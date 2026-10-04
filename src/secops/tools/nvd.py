@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import time
 from collections import deque
@@ -21,6 +22,9 @@ from secops.schemas.tools import MAX_REFERENCES, MAX_TEXT_CHARS, CveRecord
 
 NVD_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 DEFAULT_TTL_DAYS = 7
+
+
+log = logging.getLogger(__name__)
 
 
 class NvdError(Exception):
@@ -142,7 +146,9 @@ class NvdClient:
 
     # ---- cache ---------------------------------------------------------------------------
     def _cache_path(self, params: dict[str, str]) -> Path:
-        key = hashlib.sha1(json.dumps(params, sort_keys=True).encode()).hexdigest()  # noqa: S324  not security
+        key = hashlib.sha1(  # noqa: S324 - cache file name, not security
+            json.dumps(params, sort_keys=True).encode(), usedforsecurity=False
+        ).hexdigest()
         return self.cache_dir / f"{key}.json"
 
     def _read_cache(
@@ -151,18 +157,29 @@ class NvdClient:
         p = self._cache_path(params)
         if not p.exists():
             return None
-        entry = json.loads(p.read_text())
-        age = datetime.now(UTC) - datetime.fromisoformat(entry["stored_at"])
+        try:
+            entry = json.loads(p.read_text())
+            age = datetime.now(UTC) - datetime.fromisoformat(entry["stored_at"])
+        except (ValueError, KeyError, TypeError) as e:  # corrupt or hand-edited cache file
+            log.warning("ignoring unreadable NVD cache entry %s (%s)", p.name, e)
+            return None
         if age > self.ttl and not ignore_ttl:
             return None
         body: dict[str, Any] = entry["body"]
         return body
 
     def _write_cache(self, params: dict[str, str], body: dict[str, Any]) -> None:
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self._cache_path(params).write_text(
-            json.dumps({"stored_at": datetime.now(UTC).isoformat(), "params": params, "body": body})
-        )
+        """Best effort: the cache is an optimisation, a read-only data mount must not turn a
+        successful NVD answer into a tool error."""
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            self._cache_path(params).write_text(
+                json.dumps(
+                    {"stored_at": datetime.now(UTC).isoformat(), "params": params, "body": body}
+                )
+            )
+        except OSError as e:
+            log.warning("NVD cache not writable (%s); answer served without caching", e)
 
     # ---- queries -------------------------------------------------------------------------
     def query(self, params: dict[str, str]) -> tuple[dict[str, Any], bool]:

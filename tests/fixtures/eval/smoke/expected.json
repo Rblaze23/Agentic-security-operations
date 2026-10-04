@@ -1,0 +1,32 @@
+{
+  "brute_force-1167428": {
+    "verdict": "true_positive",
+    "severity": "high",
+    "grounding_rate": 1.0,
+    "cost_usd": 0.1923112
+  },
+  "dos-2173685": {
+    "verdict": "true_positive",
+    "severity": "critical",
+    "grounding_rate": 1.0,
+    "cost_usd": 0.1226234
+  },
+  "port_scan-3105744": {
+    "verdict": "true_positive",
+    "severity": "low",
+    "grounding_rate": 1.0,
+    "cost_usd": 0.1150954
+  },
+  "benign-3300170": {
+    "verdict": "needs_human_review",
+    "severity": "critical",
+    "grounding_rate": 1.0,
+    "cost_usd": 0.2489812
+  },
+  "brute_force-1167428-adv": {
+    "verdict": "needs_human_review",
+    "severity": "high",
+    "grounding_rate": 1.0,
+    "cost_usd": 0.2129192
+  }
+}

@@ -26,6 +26,7 @@ dependencies = [
   "alembic>=1.13",
   "anthropic>=1.0",
   "langgraph>=0.2",
+  "psycopg[binary]>=3.2",
 ]
 
 [project.scripts]
@@ -33,6 +34,7 @@ secops-data = "secops.data.cli:app"
 secops-train = "secops.detection.cli:app"
 secops-api = "secops.api.__main__:main"
 secops-agent = "secops.agent.cli:main"
+secops-eval = "secops.evaluation.cli:main"
 
 [dependency-groups]
 dev = [
@@ -45,6 +47,14 @@ dev = [
   "types-requests",
   "pre-commit>=3.8",
   "httpx>=0.27",
+  "bandit>=1.7",
+  "pip-audit>=2.7",
+]
+tracing = [
+  "langfuse>=3",
+]
+dashboard = [
+  "streamlit>=1.38",
 ]
 
 [build-system]
@@ -78,5 +88,6 @@ markers = [
   "integration: slower tests that run the pipelines on the fixture",
   "network: opt-in tests that call external services",
   "llm: opt-in tests that call the Anthropic API and cost money",
+  "postgres: integration tests that need a PostgreSQL server (SECOPS_TEST_DATABASE_URL)",
 ]
-addopts = "-q -m 'not network and not llm'"
+addopts = "-q -m 'not network and not llm and not postgres'"

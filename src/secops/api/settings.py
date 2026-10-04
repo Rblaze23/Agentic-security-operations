@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,6 +21,12 @@ class ApiSettings(BaseSettings):
     host: str = "127.0.0.1"  # the Dockerfile sets SECOPS_HOST=0.0.0.0 for the container
     port: int = 8000
     max_body_bytes: int = 8 * 1024 * 1024
+    rate_limit_per_minute: int = 60  # per API key; 0 disables
+    investigations_enabled: bool = True
+    agent_mode: Literal["live", "replay"] = "live"
+    agent_fixture_root: Path | None = None  # replay mode: tests/fixtures/llm
+    agent_scenario: str | None = None  # replay mode: scenario directory name
+    evaluation_runs_dir: Path = Path("evaluation/runs")
 
     @property
     def keys(self) -> list[str]:

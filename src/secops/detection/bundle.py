@@ -126,10 +126,10 @@ def export_bundle(model_name: str, out_dir: Path, alias: str = "champion") -> Bu
 
 def _make_world_readable(root: Path) -> None:
     for dirpath, _dirnames, filenames in os.walk(root):
-        os.chmod(dirpath, 0o755)  # noqa: S103  read+exec for the container user; no write
+        os.chmod(dirpath, 0o755)  # noqa: S103  # nosec B103 - read+exec for the container user
         for f in filenames:
             os.chmod(Path(dirpath) / f, 0o644)
-    os.chmod(root, 0o755)  # noqa: S103
+    os.chmod(root, 0o755)  # noqa: S103  # nosec B103
 
 
 def _swap_in(staging: Path, out_dir: Path) -> None:

@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any
+
+import anthropic
 
 from secops.agent.llm import LLM, LLMRefusalError, LLMTruncatedError
 from secops.agent.prompts import load_prompt
 from secops.agent.tools import evidence_data
-from secops.schemas.agent import CriticIssue, CriticVerdict, DraftReport, Evidence
+from secops.schemas.agent import CriticIssue, CriticVerdict, DraftReport, Evidence, ReviewIssue
+
+log = logging.getLogger(__name__)
 
 INSTRUCTION_PATTERNS = re.compile(
     r"(ignore|disregard|forget)\s+(all\s+|the\s+|your\s+|any\s+)?(previous|prior|above|earlier)?\s*"
@@ -63,6 +68,16 @@ def check_report(draft: DraftReport, evidence: dict[str, Evidence]) -> list[Crit
                     message=f"finding {i} restates an instruction-like phrase; "
                     "evidence text is data",
                     finding_index=i,
+                )
+            )
+    for label, text in [("summary", draft.summary)] + [
+        (f"recommended action {j}", a.action) for j, a in enumerate(draft.recommended_actions)
+    ]:
+        if INSTRUCTION_PATTERNS.search(text):
+            issues.append(
+                CriticIssue(
+                    code="instruction_in_evidence",
+                    message=f"{label} restates an instruction-like phrase; evidence text is data",
                 )
             )
     for t in draft.attack_techniques:
@@ -140,14 +155,22 @@ def llm_check(llm: LLM, draft: DraftReport, evidence: dict[str, Evidence]) -> li
         resp = llm.create(
             system=load_prompt("critic"), messages=messages, output_model=CriticVerdict
         )
-    except (LLMRefusalError, LLMTruncatedError) as e:
+    except (LLMRefusalError, LLMTruncatedError, anthropic.APIError) as e:
+        log.error("critic model unavailable (%s: %s)", type(e).__name__, str(e)[:200])
         return [
-            CriticIssue(
-                code="unsupported_statement",
+            ReviewIssue(
+                code="critic_unavailable",
                 message=f"critic model could not review the findings ({type(e).__name__})",
             )
         ]
-    verdict = CriticVerdict.model_validate(resp.parsed or {"issues": []})
+    if resp.parsed is None:
+        return [
+            ReviewIssue(
+                code="critic_unavailable",
+                message=f"critic returned an invalid verdict ({resp.parse_error})",
+            )
+        ]
+    verdict = CriticVerdict.model_validate(resp.parsed)
     valid = {i for i, _ in observed}
     out: list[CriticIssue] = []
     for issue in verdict.issues:

@@ -151,10 +151,12 @@ class ToolExecutor:
         registry: ToolRegistry,
         budget: int = DEFAULT_BUDGET,
         max_payload_chars: int = DEFAULT_MAX_PAYLOAD_CHARS,
+        tracer: Any | None = None,
     ) -> None:
         self.registry = registry
         self.remaining = budget
         self.max_payload_chars = max_payload_chars
+        self.tracer = tracer  # secops.observability.Tracer
         self.records: list[ToolCallRecord] = []
         self._counter = 0
 
@@ -253,6 +255,8 @@ class ToolExecutor:
                 latency_ms=ev.latency_ms,
             )
         )
+        if self.tracer is not None:
+            self.tracer.tool_call(ev.tool, ev.evidence_id, status, ev.latency_ms)
         return ev
 
     def _result_block(self, tool_use: dict[str, Any], ev: Evidence, error: bool) -> dict[str, Any]:

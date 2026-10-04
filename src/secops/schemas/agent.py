@@ -89,6 +89,20 @@ class ModelPredictionSummary(BaseModel):
     model_version: int
 
 
+ATTACK_FAMILIES = (
+    "botnet",
+    "brute_force",
+    "ddos",
+    "dos",
+    "port_scan",
+    "rare_exploit",
+    "web_attack",
+)
+AttackFamily = Literal[
+    "botnet", "brute_force", "ddos", "dos", "port_scan", "rare_exploit", "web_attack"
+]
+
+
 class TriageReport(BaseModel):
     """The agent's final output. `findings` keep observed facts, the model's prediction and the
     agent's inferences apart; every observed finding cites evidence ids that the critic verifies."""
@@ -97,7 +111,7 @@ class TriageReport(BaseModel):
 
     alert_id: str
     verdict: Verdict
-    attack_family: str | None = None
+    attack_family: AttackFamily | None = None
     severity: Severity
     confidence: float = Field(ge=0.0, le=1.0)
     summary: str = Field(min_length=1, max_length=2000)
@@ -140,6 +154,23 @@ class CriticIssue(BaseModel):
     ]
     message: str
     finding_index: int | None = None
+
+
+class ReviewIssue(CriticIssue):
+    """Internal superset of CriticIssue. `CriticIssue` is the schema the critic model fills in
+    (part of every recorded request), so outcomes the model never emits live here."""
+
+    code: Literal[  # type: ignore[assignment]
+        "unknown_evidence",
+        "unsupported_technique",
+        "unsupported_cve",
+        "severity_mismatch",
+        "verdict_inconsistent",
+        "instruction_in_evidence",
+        "unsupported_statement",
+        "missing_observed_finding",
+        "critic_unavailable",
+    ]
 
 
 class CriticVerdict(BaseModel):

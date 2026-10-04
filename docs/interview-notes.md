@@ -269,3 +269,105 @@ That the structured-output grammar is stricter than JSON Schema: it rejects `min
 Pydantic's `ipvanyaddress` string format, and any object without `additionalProperties: false`.
 The fix is a schema sanitiser in the adapter plus client-side Pydantic validation, and the free
 `count_tokens` endpoint now validates every request shape before a paid call.
+
+## Phase 5 — Evaluation
+
+**How do you evaluate an LLM agent without fooling yourself?**
+With expectations that are derived, not written by the person who tuned the prompt: the golden
+set takes the verdict from the dataset label, the family from the Phase 1 family map, the
+severity from the same rubric the agent uses, and one evidence predicate per family over raw
+tool payloads. The agent never sees any of it. Scoring separates what can be checked
+deterministically (verdict, family, severity, evidence recall, grounding, unsupported ids) from
+what needs a judge (whether an observed statement follows from its evidence), and the judge is a
+separate, cheaper model with its own fixtures. k repeats give a standard deviation and a list of
+flaky cases instead of a single lucky number.
+
+**Why a rule-based baseline?**
+Because "the agent reasons" is a claim, and the cheapest refutation is a dozen lines of rules
+over the same tools. The baseline runs the same query set, cites the same evidence records,
+uses the same rubric and costs nothing. If the agent does not beat it on the metrics that
+matter (verdicts on the hard cases, evidence recall, grounding), the honest README says so.
+
+**What does the regression gate watch, and why those gates?**
+A composite score (verdict, family, severity within one, evidence recall, grounding) with
+absolute gates on grounding (no drop above 2 points: a cheaper prompt that starts citing
+evidence it did not receive must fail even if verdicts improve), on unsupported ATT&CK/CVE ids
+(zero, always), on cost per case (no rise above 25 %), and a structural gate that rejects a
+candidate run that evaluated fewer cases than the baseline, so a partial run can never pass as
+"no regression". `secops-eval compare` exits non-zero; CI runs a five-case recorded smoke
+evaluation at zero cost, and the full live run is a manual workflow.
+
+**How does the evaluation stay affordable?**
+The golden set is small (38 alerts), each run records every model response and tool output so
+it can be replayed and re-scored for free, k = 3 runs on a subset, and the measured cost per
+investigation is printed before every run and stored with it.
+
+## Cross-cutting (brief §24 questions not answered above)
+
+**How does the agent decide which tool to call?**
+It does not choose from a menu of prose: every tool is an Anthropic tool definition generated
+from its Pydantic input model, so the model sees typed arguments and bounds, and the planner's
+questions tell it what to establish first. The system prompt orders the habit (neighbourhood of
+the alert first, then the asset and the source, then references only when they can change the
+decision), the budget makes every call cost something, and the critic punishes claims the tool
+results do not support, so unnecessary calls do not pay. Measured: the baseline makes exactly 4
+calls per case by construction; the agent's mean is in `evaluation/runs/agent-v1-k1.json`.
+
+**How do you prevent infinite loops?**
+Three hard limits, all in code rather than in the prompt: a tool budget per investigation
+(12, and a rejected call still consumes one), at most 2 critic rejections before the report is
+finalized as `needs_human_review`, and a round limit inside the investigate node; the LangGraph
+recursion limit is the backstop. A tool exception, a model refusal, an invalid structured
+output and a critic outage each have a defined exit (`tool_error` evidence, planner fallback or
+`needs_human_review`, one correction turn, `critic_unavailable`), none of which re-enters the
+loop.
+
+**What happens when the model confidence is low?**
+`needs_human_review` is a first-class verdict: the agent is told to pick it when evidence is
+insufficient, the critic forces it after two rejections, and the finalizer sets confidence to
+0 in that case. The report still carries every evidence item, the tool timeline and the
+uncertainties, so the human starts from the agent's work rather than from zero. The rubric
+lowers severity only for `false_positive`, never for "unsure".
+
+**How do you evaluate ML and LLM together?**
+In one golden set: each case starts from the detector's own prediction (probability, family,
+SHAP) on a test-split flow, and the agent's verdict is scored against the ground truth that the
+detector was also measured on. The benign false-positive cases are precisely the flows the
+detector gets wrong, so the agent's value is measured where the model fails, and the detector's
+family errors (Heartbleed scored as `web_attack`) show up as family-agreement losses the agent
+can recover with evidence.
+
+**How do you monitor agent cost?**
+Every response's token counts are priced per model from a dated table and accumulated per
+investigation; the cost is persisted with the investigation, printed by the CLI, traced to
+Langfuse when configured, and gated by the evaluation (`cost_rise` at 25 %). The runner prints
+the estimated cost before any paid run and the measured cost after it.
+
+**How would you scale the system?**
+Horizontally for the detection API (stateless, bundles baked into the image, Cloud Run
+scale-to-zero); for investigations, a queue in front of a worker pool with the same graph, a
+shared rate-limit store, PostgreSQL (already supported) and the single-pass aggregate query for
+DoS-burst anchors (`get_related_events` p95 1.1 s today). None of this is built because none
+of it has been needed: the brief forbids technology collecting.
+
+**How would you secure agent tools?**
+As they are secured now: read-only engine, typed and bounded inputs, no shell, file or URL
+parameters, outputs with no ground truth, external text flagged untrusted and truncated,
+external calls limited to NVD with a cache and a rate limiter, a registry test that walks every
+output schema. The Phase 6 API adds the key and the per-key limiter in front of the agent.
+
+**What did the Phase 5 numbers show?**
+That the agent is not yet worth its cost on the verdict, and exactly why. On 38 test-split
+alerts the rule-based investigator reaches 0.842 verdict accuracy and composite 0.884 for $0;
+the agent reaches 0.658 and 0.861 for $0.183 per case, while beating the rules on evidence
+recall (1.000 vs 0.921), evidence precision, family agreement, severity and CVEs found, with
+zero unsupported references and 89 % of observed findings judged supported. Eleven of the
+agent's thirteen wrong verdicts are `needs_human_review` after two critic rejections, so the
+critic's precision, not the investigator's reasoning, is the bottleneck. The regression gate
+fails the agent against the baseline on the composite (drop 0.024 > 0.02), which is the gate
+working. The ablation then isolates the cause: on the same 12 cases the rules-only critic
+reaches 0.917 verdict accuracy at $0.119 per case against 0.583 at $0.185 with the model
+critic, with grounding 1.000 and zero unsupported references either way, and the k = 3 run
+shows 9 of 12 cases flipping between the right verdict and human review across repeats. That
+result is in the README because the brief says it must be; the harness exists so the next
+prompt change is measured rather than believed.

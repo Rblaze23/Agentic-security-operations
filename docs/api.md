@@ -166,7 +166,33 @@ The first three SSH-Patator rows of the test split scored 0.000127–0.000155, b
 in both the container and in-process: those are among the 4.5% of SSH-Patator flows the champion
 misses (`docs/evaluation.md` §2.1), reproduced faithfully rather than hidden.
 
-## What Phase 6 adds
+## Phase 6 additions (2026-10-04)
 
-Rate limiting, persistence of predictions and alerts in PostgreSQL, tracing, TLS at the edge, and
-bundle distribution from object storage. None of it changes this contract.
+**Rate limiting.** Every protected route runs a per-API-key token bucket
+(`SECOPS_RATE_LIMIT_PER_MINUTE`, default 60; `0` disables). When a key has no token left the
+response is `429` with a `Retry-After` header (seconds). The bucket lives in the API process;
+behind more than one replica a shared store (Redis) would be needed, which is noted, not built.
+`/health` is never limited.
+
+**Investigations (the agent over HTTP).**
+
+| Endpoint | What it does |
+|---|---|
+| `POST /investigations` (body `{"alert": Alert}`) | Starts the LangGraph investigation as a background task and returns `202` with `{investigation_id, alert_id, status: "queued"}`. A second request for an alert that is still running returns the same id instead of paying twice. |
+| `GET /investigations/{id}` | Status (`queued`, `running`, `done`, `failed`) plus the full `TriageReport`, verdict, severity and cost when done; a failed run carries the error class and message. |
+| `GET /investigations?limit=20` | Recent investigations from the database plus the ones still in flight. |
+| `GET /evaluation/runs` | One summary per `evaluation/runs/*.json` (composite, verdict accuracy, grounding rate, cost). |
+
+`SECOPS_INVESTIGATIONS_ENABLED=false` turns the agent endpoints into `503` (the public Cloud
+Run deployment runs this way: no persistent database, no API spend from the internet).
+`SECOPS_AGENT_MODE=replay` with `SECOPS_AGENT_FIXTURE_ROOT` and `SECOPS_AGENT_SCENARIO` serves a
+recorded scenario, which is how the endpoint is tested without a model.
+
+**PostgreSQL.** `SECOPS_DATABASE_URL=postgresql+psycopg://…` switches the event store and the
+investigations to PostgreSQL (migration 0003 also creates `model_predictions`, schema only:
+no writer yet); Compose
+starts one. Migrations are applied by the agent CLI and the API on first use (idempotent).
+
+Still open after Phase 6: TLS is terminated by Cloud Run or a reverse proxy, never by the app;
+bundle distribution from object storage; a shared rate-limit store; a queue for investigations
+across replicas.

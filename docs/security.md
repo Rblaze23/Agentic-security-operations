@@ -54,3 +54,17 @@ model output, no payloads), API spend.
 | Key leakage | Key read from the environment or git-ignored `.env` through `AgentSettings` (`SecretStr`), passed to the SDK client explicitly, never logged; fixtures store request bodies only (no headers) | `agent/settings.py`, `agent/llm.py` |
 | Tool misuse by the model | The agent can only call the Phase 3 read-only registry; arguments are validated by the tool's Pydantic model before execution; invalid calls consume budget and return a validation error | `agent/tools.py` |
 | Ground truth leaking into the investigation | The agent sees only tool outputs, which carry no labels (Phase 3 registry test); scenario fixtures are built from the same outputs | `tests/unit/tools/test_registry.py` |
+
+## Phase 6: productionisation
+
+| Threat | Control | Where |
+|---|---|---|
+| Abuse of the paid agent endpoint | API key required, per-key token bucket (429 + Retry-After), idempotent per alert, disabled entirely on the public deployment | `api/ratelimit.py`, `api/investigations.py`, `deploy/cloudrun.md` |
+| Secrets in images or logs | Keys only from environment / Secret Manager; `.env` ignored; `gitleaks` in CI; fixtures hold request bodies without headers | CI `security` job |
+| Vulnerable dependencies | `pip-audit` in CI against the lockfile | CI |
+| Insecure code patterns | `bandit -ll` in CI; findings fixed or justified inline | CI |
+| Database exposure | PostgreSQL only reachable inside the Compose network; the API uses a read-only engine for tools and a separate writable engine for investigations | `docker-compose.yml`, `db/session.py` |
+| Tracing leaks | Traces carry ids, token counts, costs and verdicts, never prompts, evidence payloads or keys | `observability/__init__.py` |
+
+Still open: TLS inside the Compose network (terminated at the edge), a shared rate-limit store
+and an investigation queue across replicas, Cloud SQL for a deployed agent.

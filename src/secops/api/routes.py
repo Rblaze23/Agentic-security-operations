@@ -8,12 +8,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from secops.api.auth import require_api_key
 from secops.api.detector import DetectorService
+from secops.api.ratelimit import rate_limited
 from secops.schemas.alert import Alert
 from secops.schemas.api import BatchPredictResponse, HealthResponse, ModelInfo, PredictResponse
 from secops.schemas.flow import BatchPredictRequest, FeatureMismatchError, PredictRequest
 
 router = APIRouter()
-protected = APIRouter(dependencies=[Depends(require_api_key)])
+protected = APIRouter(dependencies=[Depends(require_api_key), Depends(rate_limited)])
 
 
 def _service_or_none(request: Request) -> DetectorService | None:

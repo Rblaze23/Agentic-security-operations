@@ -23,6 +23,7 @@ from secops.api.settings import get_api_settings
 from secops.config import Settings, get_settings
 from secops.db.models import Event
 from secops.db.session import make_engine, upgrade_to_head
+from secops.observability import get_tracer
 from secops.schemas.alert import Alert
 from secops.tools.detector import DetectorTool, request_for_event
 from secops.tools.registry import ToolRegistry, build_registry
@@ -73,6 +74,7 @@ def make_llms(
     fixture_root: Path,
     effort: Effort,
     settings: AgentSettings,
+    compress: bool = False,
 ) -> tuple[LLM, LLM]:
     """Investigator and critic adapters. Replay needs no key; live and record need the key."""
     client: Any | None = None
@@ -92,6 +94,7 @@ def make_llms(
         mode=mode,
         fixture_dir=fixture_dir / "investigator" if fixture_dir else None,
         client=client,
+        compress=compress,
     )
     critic = LLM(
         settings.critic_model,
@@ -99,6 +102,7 @@ def make_llms(
         mode=mode,
         fixture_dir=fixture_dir / "critic" if fixture_dir else None,
         client=client,
+        compress=compress,
     )
     return investigator, critic
 
@@ -199,6 +203,7 @@ def investigate(
         investigator=investigator,
         critic=critic,
         tool_budget=budget or agent_settings.tool_budget,
+        tracer=get_tracer(),
     )
     result = run_investigation(alert, deps, investigation_id=scenario if mode != "live" else None)
 

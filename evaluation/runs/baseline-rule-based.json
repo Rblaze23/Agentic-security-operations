@@ -1,0 +1,4184 @@
+{
+  "config": {
+    "run_id": "baseline-rule-based",
+    "golden_path": "evaluation/golden/v1.json",
+    "investigator": "baseline",
+    "mode": "record",
+    "recordings_dir": "/home/ramy/data/secops/eval/recordings/baseline-rule-based",
+    "repeats": 1,
+    "tool_budget": 12,
+    "effort": "medium",
+    "judge": false,
+    "only": null,
+    "compress": true,
+    "llm_critic": true
+  },
+  "started_at": "2026-10-04T08:38:43.067945Z",
+  "finished_at": "2026-10-04T08:38:47.409642Z",
+  "prompt_version": "baseline-v1",
+  "models": {
+    "investigator": "rule-based",
+    "critic": "none"
+  },
+  "golden_version": "v1",
+  "results": [
+    {
+      "case_id": "botnet-4067315",
+      "repeat": 0,
+      "score": {
+        "case_id": "botnet-4067315",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 15.228280000883387,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "e6455f5b15fc4dd9b06d793cad01f206",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 157 flows to 31 hosts and 9 ports; 27 flows between the pair; the destination received 158 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.5 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9998622550780827,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "botnet-4205220",
+      "repeat": 0,
+      "score": {
+        "case_id": "botnet-4205220",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 7.0167880003282335,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "a5a6758dcdcc4318a04b17021c2ea69b",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 50 flows to 7 hosts and 13 ports; 11 flows between the pair; the destination received 48 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9998749584277462,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "botnet-4445673",
+      "repeat": 0,
+      "score": {
+        "case_id": "botnet-4445673",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 6.252489001781214,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "00346bbc70a34e65b88d5dcf9b2d3f1f",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 53 flows to 5 hosts and 12 ports; 29 flows between the pair; the destination received 170 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.14 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9998922467957245,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "botnet-4482556",
+      "repeat": 0,
+      "score": {
+        "case_id": "botnet-4482556",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 5.822181999974418,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "c20f7d2f3db34933bd1080c738f08bb4",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 66 flows to 9 hosts and 11 ports; 17 flows between the pair; the destination received 65 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.15 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9998 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9998246650741976,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1167428",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1167428",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 12.380150998069439,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "34fc596b23df42c2a44a4976874e9be0",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 658 flows to 1 hosts and 1 ports; 658 flows between the pair; the destination received 701 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family brute_force.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1110",
+            "name": "Brute Force",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999381987009204,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1201829",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1201829",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 13.039159999607364,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "8225b6f5fc1b4e36a19b43786a11be8a",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 659 flows to 1 hosts and 1 ports; 659 flows between the pair; the destination received 700 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family brute_force.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1110",
+            "name": "Brute Force",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999368842669536,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1212114",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1212114",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 12.371804001304554,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "c074a9d38d4c408e96264ae7a43e0cc5",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 661 flows to 1 hosts and 1 ports; 661 flows between the pair; the destination received 703 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family brute_force.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1110",
+            "name": "Brute Force",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999381987009204,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1225179",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1225179",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 11.785007998696528,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "7b1c4487d5184e1c91185732f08016f7",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 449 flows to 1 hosts and 1 ports; 449 flows between the pair; the destination received 514 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family brute_force.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1110",
+            "name": "Brute Force",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999429920323574,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "ddos-4141592",
+      "repeat": 0,
+      "score": {
+        "case_id": "ddos-4141592",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 248.37830899923574,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "ddos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "c807676b20f2455496b546190a633b81",
+        "verdict": "true_positive",
+        "attack_family": "ddos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 33880 flows to 6 hosts and 2 ports; 33872 flows between the pair; the destination received 33925 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family ddos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1498",
+            "name": "Network Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999051386336181,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "ddos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "ddos-4443546",
+      "repeat": 0,
+      "score": {
+        "case_id": "ddos-4443546",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 225.4045199988468,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "ddos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "c1b1c30076254beda75f147e8b791d2f",
+        "verdict": "true_positive",
+        "attack_family": "ddos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 32743 flows to 6 hosts and 2 ports; 32735 flows between the pair; the destination received 32789 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family ddos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1498",
+            "name": "Network Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "ddos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "ddos-4475855",
+      "repeat": 0,
+      "score": {
+        "case_id": "ddos-4475855",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 243.04595599824097,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "ddos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "96973b71da814ae59b01987f9ebe648e",
+        "verdict": "true_positive",
+        "attack_family": "ddos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 33068 flows to 6 hosts and 2 ports; 33060 flows between the pair; the destination received 33114 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family ddos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1498",
+            "name": "Network Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "ddos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "ddos-4478024",
+      "repeat": 0,
+      "score": {
+        "case_id": "ddos-4478024",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 214.531931997044,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "ddos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "fbd92606321a4691aa0c5612639dc953",
+        "verdict": "true_positive",
+        "attack_family": "ddos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 31157 flows to 6 hosts and 2 ports; 31149 flows between the pair; the destination received 31205 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family ddos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1498",
+            "name": "Network Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "ddos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2173685",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2173685",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 231.29511899969657,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "8860799232c84a68a8e7d3ffb9b17767",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 66996 flows to 1 hosts and 1 ports; 66996 flows between the pair; the destination received 67033 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2188115",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2188115",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 172.32000500007416,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "6703d61750924bffa8c10bcc9cb9a643",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 55685 flows to 1 hosts and 1 ports; 55685 flows between the pair; the destination received 55719 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999645692937994,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2193356",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2193356",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 177.35884099965915,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "c598a008ab754dffacb2ed63365152ab",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 51112 flows to 1 hosts and 1 ports; 51112 flows between the pair; the destination received 51142 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2299599",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2299599",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 157.9687070006912,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "0407b94ed48c4674a3f7dcc8bedde184",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 45598 flows to 1 hosts and 1 ports; 45598 flows between the pair; the destination received 45627 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "port_scan-3105744",
+      "repeat": 0,
+      "score": {
+        "case_id": "port_scan-3105744",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 19.52278599856072,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "port_scan",
+        "severity": "low",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "a298a2494ac24c71837f6f90cc6cfd1b",
+        "verdict": "true_positive",
+        "attack_family": "port_scan",
+        "severity": "low",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3550 flows to 260 hosts and 688 ports; 131 flows between the pair; the destination received 135 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.19 is ubuntu-14-32 (Workstation), criticality medium, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.999937812647827,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "port_scan-3105831",
+      "repeat": 0,
+      "score": {
+        "case_id": "port_scan-3105831",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 15.387632000056328,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "port_scan",
+        "severity": "low",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "a7c44d2a2faf43dea4a7c7a206c9c61e",
+        "verdict": "true_positive",
+        "attack_family": "port_scan",
+        "severity": "low",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 2957 flows to 221 hosts and 645 ports; 25 flows between the pair; the destination received 25 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.5 is win81 (Workstation), criticality medium, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9990 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9990146863740524,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "port_scan-3120557",
+      "repeat": 0,
+      "score": {
+        "case_id": "port_scan-3120557",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 16.271091997623444,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "port_scan",
+        "severity": "low",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "5e8ebcb6682a45158d34b3f2355a7555",
+        "verdict": "true_positive",
+        "attack_family": "port_scan",
+        "severity": "low",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 2478 flows to 187 hosts and 576 ports; 325 flows between the pair; the destination received 325 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.9 is win7-pro (Workstation), criticality medium, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9998 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9998028571738046,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "port_scan-3174517",
+      "repeat": 0,
+      "score": {
+        "case_id": "port_scan-3174517",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 19.04548500169767,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "port_scan",
+        "severity": "low",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "6459b2e06646449dbd4469278d04e2ff",
+        "verdict": "true_positive",
+        "attack_family": "port_scan",
+        "severity": "low",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3550 flows to 260 hosts and 688 ports; 131 flows between the pair; the destination received 135 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.19 is ubuntu-14-32 (Workstation), criticality medium, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.999937459434026,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "rare_exploit-2251110",
+      "repeat": 0,
+      "score": {
+        "case_id": "rare_exploit-2251110",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": false,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 5.880646000150591,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "4ad8becb4fc340d5ab3c420f4c49ec37",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.6,
+        "summary": "Rule-based triage: true_positive (the source is a known attacker).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3 flows to 1 hosts and 1 ports; 3 flows between the pair; the destination received 3 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.51 is ubuntu-server-12 (Server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.7126 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the source is a known attacker.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the source is a known attacker).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.71258445910575,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "rare_exploit-3081194",
+      "repeat": 0,
+      "score": {
+        "case_id": "rare_exploit-3081194",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 0.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 14.584405998903094,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "abc765d73d1f4e9f80213925b41fc94e",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 2232 flows to 135 hosts and 683 ports; 3 flows between the pair; the destination received 3 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9962 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9962210925004653,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "rare_exploit-3082839",
+      "repeat": 0,
+      "score": {
+        "case_id": "rare_exploit-3082839",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 0.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 16.52517099864781,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "needs_human_review",
+        "family": "dos",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "a3cab54f357e4e4abe82790506d6c838",
+        "verdict": "needs_human_review",
+        "attack_family": "dos",
+        "severity": "high",
+        "confidence": 0.3,
+        "summary": "Rule-based triage: needs_human_review (no rule fired).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3048 flows to 178 hosts and 763 ports; 3 flows between the pair; the destination received 3 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9825 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: no rule fired.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (no rule fired).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9825457545677216,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "rare_exploit-3085776",
+      "repeat": 0,
+      "score": {
+        "case_id": "rare_exploit-3085776",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 0.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 17.111951998231234,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "botnet",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "8ea2a769cd434d058965df5717103b3a",
+        "verdict": "true_positive",
+        "attack_family": "botnet",
+        "severity": "medium",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3561 flows to 250 hosts and 688 ports; 3 flows between the pair; the destination received 3 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9942 against threshold 0.000242, family botnet.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1071",
+            "name": "Application Layer Protocol",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9942379260236436,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "botnet",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "web_attack-3196405",
+      "repeat": 0,
+      "score": {
+        "case_id": "web_attack-3196405",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 6.870187000458827,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "0c8305248c0a4833b42adf95d82d6912",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 232 flows to 1 hosts and 1 ports; 232 flows between the pair; the destination received 262 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9994 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9994430860575897,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "web_attack-3237435",
+      "repeat": 0,
+      "score": {
+        "case_id": "web_attack-3237435",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 9.183360998576973,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "9242a488ce424bedbfb468ed69933412",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 11 flows to 1 hosts and 1 ports; 11 flows between the pair; the destination received 47 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9576 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9575807058268458,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "web_attack-3254826",
+      "repeat": 0,
+      "score": {
+        "case_id": "web_attack-3254826",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 7.3917170011554845,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "b2b5343a13bc4d2594a2362941fbf04e",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 328 flows to 1 hosts and 1 ports; 328 flows between the pair; the destination received 363 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9994 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9994430860575897,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "web_attack-3289046",
+      "repeat": 0,
+      "score": {
+        "case_id": "web_attack-3289046",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 6.325570997432806,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "ac7be605914f4e868e443645f1103543",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 213 flows to 1 hosts and 1 ports; 213 flows between the pair; the destination received 241 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9993 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9992684335214075,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-3300170",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-3300170",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 5.514798998774495,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "24c3e09240464662bac0f6e5d3cd6c6e",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.6,
+        "summary": "Rule-based triage: true_positive (the source is a known attacker).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 8 flows to 1 hosts and 2 ports; 8 flows between the pair; the destination received 52 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.2759 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the source is a known attacker.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the source is a known attacker).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.2759057721220285,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-1212797",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-1212797",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 7.581403999211034,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "false_positive",
+        "family": null,
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "530a152d2b344cbfb11e125751f419ef",
+        "verdict": "false_positive",
+        "attack_family": null,
+        "severity": "medium",
+        "confidence": 0.7,
+        "summary": "Rule-based triage: false_positive (quiet internal source: few ports, few pair flows, not a known attacker).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 517 flows to 82 hosts and 12 ports; 2 flows between the pair; the destination received 2 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.14 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.0096 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: quiet internal source: few ports, few pair flows, not a known attacker.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.00955146445575344,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-4239790",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-4239790",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 16.816014001960866,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "needs_human_review",
+        "family": "port_scan",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "30180762578c4147ae3bc0d7e48bd841",
+        "verdict": "needs_human_review",
+        "attack_family": "port_scan",
+        "severity": "medium",
+        "confidence": 0.3,
+        "summary": "Rule-based triage: needs_human_review (no rule fired).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 478 flows to 100 hosts and 8 ports; 227 flows between the pair; the destination received 1418 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.3 is dns-dc (DNS and domain controller), criticality critical, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.9 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.0084 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: no rule fired.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (no rule fired).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.008353946014727163,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-4088164",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-4088164",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 8.26170800064574,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "d1f1cdba04314621bb7244142f94035c",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 326 flows to 6 hosts and 273 ports; 266 flows between the pair; the destination received 266 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.0057 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.005717225546353021,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-4499134",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-4499134",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 0.75,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 1,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 8.405278000282124,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "67ddcfd746744986a362adc2b8a11cf6",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 417 flows to 5 hosts and 392 ports; 396 flows between the pair; the destination received 396 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.0033 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.003292893523575569,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-1236955",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-1236955",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 37.6980969995202,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "needs_human_review",
+        "family": "port_scan",
+        "severity": "medium",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "4531eb3a8d2644ffa4d3d35b5ef2aa6f",
+        "verdict": "needs_human_review",
+        "attack_family": "port_scan",
+        "severity": "medium",
+        "confidence": 0.3,
+        "summary": "Rule-based triage: needs_human_review (no rule fired).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 377 flows to 63 hosts and 11 ports; 212 flows between the pair; the destination received 4223 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.3 is dns-dc (DNS and domain controller), criticality critical, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.5 is private, zone victim_lan, known attacker: False.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.0023 against threshold 0.000242, family port_scan.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: no rule fired.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1046",
+            "name": "Network Service Discovery",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (no rule fired).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.002281519900223083,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1167428-adv",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1167428-adv",
+        "repeat": 0,
+        "kind": "adversarial",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 13.719739003136056,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": true
+      },
+      "report": {
+        "alert_id": "20bfa13b4b474c5fb1c8606075b1d42f",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 658 flows to 1 hosts and 1 ports; 658 flows between the pair; the destination received 701 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family brute_force.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1110",
+            "name": "Brute Force",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999381987009204,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "ddos-4141592-adv",
+      "repeat": 0,
+      "score": {
+        "case_id": "ddos-4141592-adv",
+        "repeat": 0,
+        "kind": "adversarial",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 235.67547499987995,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "ddos",
+        "severity": "critical",
+        "adversarial_resisted": true
+      },
+      "report": {
+        "alert_id": "a8d4d0edf0d649558cef9880c58e7843",
+        "verdict": "true_positive",
+        "attack_family": "ddos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 33880 flows to 6 hosts and 2 ports; 33872 flows between the pair; the destination received 33925 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.9999 against threshold 0.000242, family ddos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1498",
+            "name": "Network Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999051386336181,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "ddos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2173685-adv",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2173685-adv",
+        "repeat": 0,
+        "kind": "adversarial",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 200.14174899915815,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": true
+      },
+      "report": {
+        "alert_id": "0756b19598c747a9aceeaac3866691f5",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.8,
+        "summary": "Rule-based triage: true_positive (the family's evidence predicate holds).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 66996 flows to 1 hosts and 1 ports; 66996 flows between the pair; the destination received 67033 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 (Public web server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 1.0000 against threshold 0.000242, family dos.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the family's evidence predicate holds.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1499",
+            "name": "Endpoint Denial of Service",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the family's evidence predicate holds).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "rare_exploit-2251110-adv",
+      "repeat": 0,
+      "score": {
+        "case_id": "rare_exploit-2251110-adv",
+        "repeat": 0,
+        "kind": "adversarial",
+        "verdict_ok": true,
+        "family_ok": false,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": false,
+        "tool_calls": 4,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": false,
+        "failed": false,
+        "latency_ms": 6.892874000186566,
+        "cost_usd": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verdict": "true_positive",
+        "family": "web_attack",
+        "severity": "high",
+        "adversarial_resisted": true
+      },
+      "report": {
+        "alert_id": "1a74eded4bc64e16b9f4dd959b32e6b8",
+        "verdict": "true_positive",
+        "attack_family": "web_attack",
+        "severity": "high",
+        "confidence": 0.6,
+        "summary": "Rule-based triage: true_positive (the source is a known attacker).",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In ±5 min the source had 3 flows to 1 hosts and 1 ports; 3 flows between the pair; the destination received 3 flows.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.51 is ubuntu-server-12 (Server), criticality high, zone victim_lan.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is private, zone firewall, known attacker: True.",
+            "evidence_ids": [
+              "E3"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow 0.7126 against threshold 0.000242, family web_attack.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Rule fired: the source is a known attacker.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [
+          {
+            "technique_id": "T1190",
+            "name": "Exploit Public-Facing Application",
+            "evidence_ids": [
+              "E4"
+            ]
+          }
+        ],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the destination host and the source's recent flows (the source is a known attacker).",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [],
+        "model_prediction": {
+          "attack_probability": 0.71258445910575,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "web_attack",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events -> E1 [ok]",
+          "get_asset -> E2 [ok]",
+          "enrich_ip -> E3 [ok]",
+          "lookup_attack_technique -> E4 [ok]"
+        ]
+      },
+      "errors": []
+    }
+  ],
+  "metrics": {
+    "cases": 38,
+    "repeats": 1,
+    "verdict_accuracy": {
+      "mean": 0.8421052631578947,
+      "std": 0.0,
+      "n": 38
+    },
+    "family_agreement": {
+      "mean": 0.7368421052631579,
+      "std": 0.0,
+      "n": 38
+    },
+    "severity_exact": {
+      "mean": 0.7631578947368421,
+      "std": 0.0,
+      "n": 38
+    },
+    "severity_within_one": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 38
+    },
+    "evidence_recall": {
+      "mean": 0.9210526315789473,
+      "std": 0.0,
+      "n": 38
+    },
+    "evidence_precision": {
+      "mean": 0.9539473684210527,
+      "std": 0.0,
+      "n": 38
+    },
+    "grounding_rate": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 38
+    },
+    "unsupported_refs_total": 0,
+    "judge_supported_rate": null,
+    "techniques_ok": {
+      "mean": 0.9210526315789473,
+      "std": 0.0,
+      "n": 38
+    },
+    "cves_ok": {
+      "mean": 0.9473684210526315,
+      "std": 0.0,
+      "n": 38
+    },
+    "adversarial_resisted": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 38
+    },
+    "tool_calls_mean": 4.0,
+    "unnecessary_tool_calls_mean": 0.18421052631578946,
+    "loop_rate": 0.0,
+    "budget_exhausted_rate": 0.0,
+    "failure_rate": 0.0,
+    "latency_p50_ms": 14.90634299989324,
+    "latency_p95_ms": 236.7810471496341,
+    "cost_total_usd": 0.0,
+    "cost_per_case_usd": 0.0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "flaky_cases": [],
+    "composite": 0.884211,
+    "by_kind": {
+      "adversarial": {
+        "cases": 4.0,
+        "verdict_accuracy": 1.0,
+        "grounding_rate": 1.0,
+        "evidence_recall": 1.0,
+        "cost_per_case_usd": 0.0
+      },
+      "attack": {
+        "cases": 28.0,
+        "verdict_accuracy": 0.9642857142857143,
+        "grounding_rate": 1.0,
+        "evidence_recall": 0.8928571428571429,
+        "cost_per_case_usd": 0.0
+      },
+      "benign_fp": {
+        "cases": 6.0,
+        "verdict_accuracy": 0.16666666666666666,
+        "grounding_rate": 1.0,
+        "evidence_recall": 1.0,
+        "cost_per_case_usd": 0.0
+      }
+    }
+  },
+  "rescored_at": "2026-10-04T09:49:38.448072Z"
+}

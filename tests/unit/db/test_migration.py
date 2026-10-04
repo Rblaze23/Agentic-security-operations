@@ -73,3 +73,20 @@ def test_upgrade_creates_investigations_and_tool_calls(migrated_engine: Engine) 
     }
     fks = insp.get_foreign_keys("tool_calls")
     assert fks and fks[0]["referred_table"] == "investigations"
+
+
+def test_upgrade_creates_model_predictions(migrated_engine: Engine) -> None:
+    insp = inspect(migrated_engine)
+    assert "model_predictions" in insp.get_table_names()
+    cols = {c["name"] for c in insp.get_columns("model_predictions")}
+    assert {
+        "prediction_id",
+        "event_id",
+        "attack_probability",
+        "is_alert",
+        "model_name",
+        "created_at",
+    } <= cols
+    assert ("created_at",) in {
+        tuple(i["column_names"]) for i in insp.get_indexes("model_predictions")
+    }

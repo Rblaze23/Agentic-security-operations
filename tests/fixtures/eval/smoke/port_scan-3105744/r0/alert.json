@@ -1,0 +1,69 @@
+{
+  "alert_id": "cb84690f5ccd492fbfe4ea928f3ddefd",
+  "event_id": "3105744",
+  "metadata": {
+    "timestamp": "2017-07-06T18:40:30.583239Z",
+    "source_ip": "192.168.10.8",
+    "destination_ip": "192.168.10.19",
+    "source_port": 59793,
+    "destination_port": 8333,
+    "protocol": 6
+  },
+  "prediction": {
+    "prediction_id": "c8cedca2b92140bf8e5c7019e09ed43a",
+    "event_id": "3105744",
+    "model_name": "secops-detector",
+    "model_version": 1,
+    "run_id": "dcc36c43a75749eab6c77e55e79cf837",
+    "feature_spec_version": "v1-noport",
+    "attack_probability": 0.999937812647827,
+    "threshold": 0.0002419239107545048,
+    "is_alert": true,
+    "predicted_family": "port_scan",
+    "family_probabilities": {
+      "botnet": 3.29841760000172e-8,
+      "brute_force": 8.350439086825938e-8,
+      "ddos": 8.919137401012542e-7,
+      "dos": 1.2543293625275988e-6,
+      "port_scan": 0.9999977301558353,
+      "web_attack": 7.112495239335637e-9
+    },
+    "top_contributions": [
+      {
+        "feature": "Bwd Packet Length Mean",
+        "value": 0.0,
+        "shap_value": 3.744381375639649
+      },
+      {
+        "feature": "Fwd IAT Min",
+        "value": 48.0,
+        "shap_value": 2.4478925995535814
+      },
+      {
+        "feature": "Bwd RST Flags",
+        "value": 2.0,
+        "shap_value": 2.2372285643170957
+      },
+      {
+        "feature": "Bwd Segment Size Avg",
+        "value": 0.0,
+        "shap_value": 0.9320555500723537
+      },
+      {
+        "feature": "Fwd Packet Length Max",
+        "value": 0.0,
+        "shap_value": 0.8220768987833779
+      }
+    ],
+    "timestamp": "2026-10-04T08:53:14.659159Z",
+    "latency_ms": 8.483174999128096
+  },
+  "key_features": {
+    "Bwd Packet Length Mean": 0.0,
+    "Fwd IAT Min": 48.0,
+    "Bwd RST Flags": 2.0,
+    "Bwd Segment Size Avg": 0.0,
+    "Fwd Packet Length Max": 0.0
+  },
+  "status": "new"
+}

@@ -17,15 +17,17 @@ from pydantic import ValidationError
 from secops.agent.critic import check_report, llm_check
 from secops.agent.llm import LLM, LLMRefusalError, LLMTruncatedError
 from secops.agent.prompts import PROMPT_VERSION, load_prompt
-from secops.agent.rubric import severity_for
+from secops.agent.rubric import normalize_family, severity_for, success_indicator
 from secops.agent.state import InvestigationState
 from secops.agent.tools import ToolExecutor, tool_definitions
+from secops.observability import NullTracer, SafeTracer, Tracer
 from secops.schemas.agent import (
     CriticIssue,
     DraftReport,
     Evidence,
     ModelPredictionSummary,
     Plan,
+    ReviewIssue,
     ToolCallRecord,
     TriageReport,
     UsageTotals,
@@ -50,6 +52,8 @@ class AgentDeps:
     critic: LLM
     tool_budget: int = 12
     max_investigate_rounds: int | None = None  # defaults to tool_budget + 3
+    tracer: Tracer | None = None  # observability hook; NullTracer when None
+    llm_critic: bool = True  # False: deterministic critic rules only (evaluation ablation)
 
 
 @dataclass
@@ -117,10 +121,12 @@ def build_graph(deps: AgentDeps) -> Any:
     planner_system = load_prompt("planner")
     executors: dict[str, ToolExecutor] = {}
 
+    tracer: Tracer = deps.tracer if deps.tracer is not None else SafeTracer(NullTracer())
+
     def executor_for(state: InvestigationState) -> ToolExecutor:
         inv_id = state["investigation_id"]
         if inv_id not in executors:
-            executors[inv_id] = ToolExecutor(deps.registry, budget=deps.tool_budget)
+            executors[inv_id] = ToolExecutor(deps.registry, budget=deps.tool_budget, tracer=tracer)
         return executors[inv_id]
 
     def plan_node(state: InvestigationState) -> dict[str, Any]:
@@ -165,13 +171,16 @@ def build_graph(deps: AgentDeps) -> Any:
         draft: DraftReport | None = None
         errors = list(state.get("errors", []))
         for _ in range(max_rounds):
-            tools = defs if ex.remaining > 0 else None
+            # The tools array must stay byte-identical for the cached prefix and the
+            # preserved-thinking check; when the budget is spent we forbid calls instead.
+            tool_choice = None if ex.remaining > 0 else {"type": "none"}
             try:
                 resp = deps.investigator.create(
                     system=investigator_system,
                     messages=messages,
-                    tools=tools,
+                    tools=defs,
                     output_model=DraftReport,
+                    tool_choice=tool_choice,
                 )
             except (LLMRefusalError, LLMTruncatedError, anthropic.APIError) as e:
                 log.error("investigator failed (%s: %s)", type(e).__name__, e)
@@ -194,18 +203,18 @@ def build_graph(deps: AgentDeps) -> Any:
                     results.append(block)
                 messages.append({"role": "user", "content": results})
                 continue
-            try:
-                draft = DraftReport.model_validate(resp.parsed or {})
-            except ValidationError as e:
-                errors.append(f"draft invalid: {e.error_count()} errors")
+            if resp.parsed is None:
+                errors.append(f"draft invalid: {resp.parse_error}")
                 messages.append(
                     {
                         "role": "user",
-                        "content": f"The JSON was invalid: {e.errors()[:3]}. "
-                        "Answer again with a valid object.",
+                        "content": f"The report was rejected by validation: {resp.parse_error}. "
+                        "Answer again with a valid JSON object; every observed finding must "
+                        "cite at least one evidence id you received.",
                     }
                 )
                 continue
+            draft = DraftReport.model_validate(resp.parsed)
             break
         status = "reviewing" if draft is not None else "failed"
         if draft is None and not errors:
@@ -226,7 +235,7 @@ def build_graph(deps: AgentDeps) -> Any:
             return {"critic_issues": [], "status": "failed"}
         by_id = {e.evidence_id: e for e in state.get("evidence", [])}
         issues = check_report(draft, by_id)
-        if not issues:
+        if not issues and deps.llm_critic:
             issues = llm_check(deps.critic, draft, by_id)
         iteration = state.get("iteration", 0)
         update: dict[str, Any] = {
@@ -252,8 +261,11 @@ def build_graph(deps: AgentDeps) -> Any:
         return "critic" if state.get("status") == "reviewing" else "finalize"
 
     def route_after_critic(state: InvestigationState) -> Literal["investigate", "finalize"]:
-        if not state.get("critic_issues"):
+        issues = state.get("critic_issues") or []
+        if not issues:
             return "finalize"
+        if any(isinstance(i, ReviewIssue) and i.code == "critic_unavailable" for i in issues):
+            return "finalize"  # nothing the investigator can fix; escalate to a human
         return "investigate" if state.get("iteration", 0) < MAX_CRITIC_REJECTIONS else "finalize"
 
     def finalize_node(state: InvestigationState) -> dict[str, Any]:
@@ -263,14 +275,23 @@ def build_graph(deps: AgentDeps) -> Any:
         issues = state.get("critic_issues", [])
         forced_review = draft is None or bool(issues)
         verdict = "needs_human_review" if forced_review else draft.verdict  # type: ignore[union-attr]
-        family = (draft.attack_family if draft else None) or alert.prediction.predicted_family
-        severity = severity_for(
-            family,
-            _asset_criticality(alert, evidence),
-            bool(draft and draft.success_indicator),
-            verdict,
-        )
         uncertainties = list(draft.uncertainties) if draft else []
+        raw_family = draft.attack_family if draft else None
+        family = normalize_family(raw_family)
+        if family is None:
+            family = normalize_family(alert.prediction.predicted_family)
+            if raw_family:
+                uncertainties.append(
+                    f"the model named the family {raw_family!r}, which is not one of the known "
+                    f"families; the detector's family ({family}) is used for severity"
+                )
+        success = success_indicator(alert.event_id, evidence)
+        if draft and draft.success_indicator and not success:
+            uncertainties.append(
+                "the model asserted the attack succeeded, but no related-events aggregate shows "
+                "a large return transfer to the source; severity was not raised for it"
+            )
+        severity = severity_for(family, _asset_criticality(alert, evidence), success, verdict)
         uncertainties += [
             f"{e.tool} ({e.evidence_id}) failed: {e.summary}"
             for e in evidence
@@ -291,9 +312,7 @@ def build_graph(deps: AgentDeps) -> Any:
         report = TriageReport(
             alert_id=alert.alert_id,
             verdict=verdict,
-            attack_family=family
-            if verdict != "false_positive"
-            else (draft.attack_family if draft else None),
+            attack_family=family if verdict != "false_positive" else None,
             severity=severity,
             confidence=draft.confidence if (draft and not forced_review) else 0.0,
             summary=draft.summary
@@ -342,10 +361,14 @@ def run_investigation(
     usage = UsageTotals()
     deps.investigator.usage = usage
     deps.critic.usage = usage
+    tracer: Tracer = deps.tracer if deps.tracer is not None else SafeTracer(NullTracer())
+    deps.investigator.tracer = tracer
+    deps.critic.tracer = tracer
     inv_id = investigation_id or uuid.uuid4().hex
     started = now or datetime.now(UTC)
     start = time.perf_counter()
     app = build_graph(deps)
+    tracer.start(inv_id, alert.alert_id, PROMPT_VERSION)
     final: InvestigationState = app.invoke(
         {
             "investigation_id": inv_id,
@@ -368,6 +391,7 @@ def run_investigation(
     )
     report = final.get("report")
     assert report is not None
+    tracer.end(report.verdict, report.severity, usage.cost_usd)
     return InvestigationResult(
         investigation_id=inv_id,
         report=report,

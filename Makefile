@@ -1,7 +1,7 @@
 # The venv lives on the Linux filesystem: /mnt/* (DrvFs) cannot create the symlinks uv needs.
 export UV_PROJECT_ENVIRONMENT ?= $(HOME)/.venvs/secops
 
-.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui export-models api docker-build docker-smoke compose-up compose-down load-events fetch-attack test-network
+.PHONY: setup lint type test-unit test-integration test data-download data-build train-binary train-family train-heldout train-ablations train-all mlflow-ui export-models api docker-build docker-smoke compose-up compose-down verify-deployment dashboard compose-ui load-events fetch-attack test-network
 
 setup:
 	uv sync --all-groups
@@ -69,8 +69,17 @@ docker-build:
 docker-smoke: docker-build
 	uv run python scripts/docker_smoke.py secops-api:local
 
+dashboard:
+	uv run streamlit run dashboard/app.py
+
+compose-ui:
+	docker compose --profile ui up --build -d
+
+verify-deployment:
+	uv run python scripts/verify_deployment.py $(URL) $(KEY)
+
 compose-up:
-	docker compose up --build -d api
+	docker compose up --build -d postgres api
 
 compose-down:
 	docker compose down

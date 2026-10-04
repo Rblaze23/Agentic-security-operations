@@ -16,7 +16,55 @@ jobs:
       - run: uv run ruff check . && uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest tests/unit
+      - name: Evaluation CLI self-check (the recorded smoke evaluation itself runs in the unit suite)
+        run: |
+          uv run pytest tests/unit/evaluation/test_smoke_replay.py -p no:warnings
+          uv run secops-eval compare evaluation/baselines/latest.json evaluation/baselines/latest.json
+      - name: Offline end-to-end demo (API + replayed investigation)
+        run: MLFLOW_DISABLE_AGENT_HINT=1 uv run python scripts/demo.py
       - run: uv run pytest tests/integration -m integration
+
+  postgres:
+    runs-on: ubuntu-latest
+    needs: checks
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: secops
+          POSTGRES_PASSWORD: secops
+          POSTGRES_DB: secops_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U secops" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      SECOPS_TEST_DATABASE_URL: postgresql+psycopg://secops:secops@localhost:5432/secops_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-groups
+      - run: uv run pytest tests/integration -m postgres -p no:warnings
+
+  security:
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-groups
+      - run: uv run bandit -r src -q -ll
+      - run: uv run pip-audit --skip-editable
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
     runs-on: ubuntu-latest

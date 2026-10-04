@@ -20,7 +20,11 @@ HEADERS = {"X-API-Key": KEY}
 
 @pytest.fixture(scope="module")
 def client(service: DetectorService, tmp_path_factory: pytest.TempPathFactory) -> TestClient:
-    settings = ApiSettings(api_keys=f"{KEY},other-key", model_dir=tmp_path_factory.mktemp("unused"))
+    settings = ApiSettings(
+        api_keys=f"{KEY},other-key",
+        model_dir=tmp_path_factory.mktemp("unused"),
+        rate_limit_per_minute=0,
+    )
     return TestClient(create_app(service=service, settings=settings))
 
 

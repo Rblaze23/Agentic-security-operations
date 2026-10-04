@@ -16,3 +16,7 @@ data/processed/
 *.zip
 .superpowers/
 models/
+
+# runtime scratch
+.nvd-replay/
+.tmp-smoke/

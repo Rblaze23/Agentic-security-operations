@@ -2,8 +2,8 @@
   "scenario": "heartbleed",
   "event_id": 2251110,
   "verdict": "needs_human_review",
-  "severity": "high",
-  "attack_family": "heartbleed (detector family: web_attack)",
+  "severity": "critical",
+  "attack_family": "rare_exploit",
   "confidence": 0.0,
   "status": "done",
   "tool_calls": [

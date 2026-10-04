@@ -14,15 +14,21 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from secops import __version__
 from secops.api.auth import require_api_key
 from secops.api.detector import DetectorService
+from secops.api.investigations import InvestigationManager
+from secops.api.investigations import router as investigations_router
 from secops.api.logging import configure_logging, request_id_middleware
 from secops.api.routes import protected, router
 from secops.api.settings import ApiSettings, get_api_settings
+from secops.tools.registry import ToolRegistry
 
 log = logging.getLogger("secops.api")
 
 
 def create_app(
-    service: DetectorService | None = None, settings: ApiSettings | None = None
+    service: DetectorService | None = None,
+    settings: ApiSettings | None = None,
+    registry: ToolRegistry | None = None,
+    database_url: str | None = None,
 ) -> FastAPI:
     settings = settings or get_api_settings()
     configure_logging(settings.log_level)
@@ -54,9 +60,13 @@ def create_app(
     )
     app.state.settings = settings
     app.state.service = service
+    app.state.investigations = InvestigationManager(
+        settings, registry, database_url, service_provider=lambda: app.state.service
+    )
     app.middleware("http")(request_id_middleware)
     app.include_router(router)
     app.include_router(protected)
+    app.include_router(investigations_router)
 
     @app.get("/openapi.json", include_in_schema=False, dependencies=[Depends(require_api_key)])
     def openapi() -> JSONResponse:

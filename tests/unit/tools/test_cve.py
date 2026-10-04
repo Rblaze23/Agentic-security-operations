@@ -135,3 +135,18 @@ def test_cve_input_bounds() -> None:
         CveLookupInput(keyword="x" * 101)
     with pytest.raises(ValidationError):
         CveLookupInput(keyword="x", max_results=6)
+
+
+def test_cache_write_failure_does_not_lose_the_answer(tmp_path: Path) -> None:
+    """A read-only data mount (Compose) must not turn a successful NVD answer into an error."""
+    import os
+
+    ro = tmp_path / "ro"
+    ro.mkdir()
+    os.chmod(ro, 0o500)
+    try:
+        client = NvdClient(fetcher=FixtureFetcher(), cache_dir=ro / "nvd")
+        body, cached = client.query({"cveId": "CVE-2014-0160"})
+        assert not cached and body["totalResults"] >= 1
+    finally:
+        os.chmod(ro, 0o700)

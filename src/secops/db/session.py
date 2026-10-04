@@ -21,7 +21,11 @@ def make_engine(url: str, read_only: bool = False) -> Engine:
     SQLite: `PRAGMA query_only = 1` on connect. PostgreSQL (Phase 6): use a SELECT-only role in
     the URL; the pragma is a no-op there and the role does the enforcement.
     """
-    engine = create_engine(url, future=True)
+    kwargs: dict[str, Any] = {"future": True}
+    if url.startswith("postgresql"):
+        # pre-ping drops stale pooled connections (Cloud SQL idles them); small pool per process
+        kwargs.update(pool_pre_ping=True, pool_size=5, max_overflow=5)
+    engine = create_engine(url, **kwargs)
     if read_only and url.startswith("sqlite"):
 
         @event.listens_for(engine, "connect")

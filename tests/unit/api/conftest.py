@@ -9,6 +9,7 @@ from secops.data.ingest import read_all
 from secops.data.schema import FEATURE_COLS
 from secops.schemas.flow import PredictRequest
 from tests.fixtures.make_bundle import make_fixture_bundles
+from tests.unit.agent.conftest import full_registry, registry  # noqa: F401
 
 
 @pytest.fixture(scope="session")

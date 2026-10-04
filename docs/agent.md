@@ -16,12 +16,20 @@ alert ──► plan ──► investigate ──► critic ──► finalize �
 | Node | Model | What it does |
 |---|---|---|
 | `plan` | Opus 5.5, structured output `Plan` | Reads the alert brief (metadata, detector probability, family, top SHAP contributions) and the tool catalogue; writes 2–6 investigation questions. On refusal or an API error it falls back to three fixed questions, so planning never aborts an investigation. |
-| `investigate` | Opus 5.5, tools + structured output `DraftReport` | Loops while the model calls tools. Each `tool_use` block runs through the `ToolExecutor`, which validates arguments, enforces the budget (12 calls), converts exceptions into `tool_error` evidence and returns an envelope `{evidence_id, tool, kind, summary, untrusted_text, data}`. All results of one turn go back in one user message. When the budget is spent the final call is made without tools. The history is append-only. |
-| `critic` | deterministic rules, then Sonnet 5.5 with `CriticVerdict` | Rules first: every cited evidence id exists; each ATT&CK technique and CVE appears in the cited `lookup_attack_technique` / `lookup_cve` evidence with status `found`; `true_positive` needs an observed finding, `false_positive` an inference; no instruction-like text in findings. Only a rule-clean draft goes to the model, which judges whether each observed finding follows from its cited evidence summaries. Any issue sends the draft back with the issues appended as a user message. |
+| `investigate` | Opus 5.5, tools + structured output `DraftReport` | Loops while the model calls tools. Each `tool_use` block runs through the `ToolExecutor`, which validates arguments, enforces the budget (12 calls), converts exceptions into `tool_error` evidence and returns an envelope `{evidence_id, tool, kind, summary, untrusted_text, data}`. All results of one turn go back in one user message. When the budget is spent the tools array stays in the request (the cached prefix and the preserved-thinking check need it byte-identical) and `tool_choice: none` forbids further calls. A draft that fails a Pydantic rule the API grammar cannot express (an observed finding with no evidence ids) gets one correction turn. The history is append-only. |
+| `critic` | deterministic rules, then Sonnet 5.5 with `CriticVerdict` | Rules first: every cited evidence id exists; each ATT&CK technique and CVE appears in the cited `lookup_attack_technique` / `lookup_cve` evidence with status `found`; `true_positive` needs an observed finding, `false_positive` an inference; no instruction-like text in findings. Only a rule-clean draft goes to the model, which judges whether each observed finding follows from its cited evidence summaries. Any issue sends the draft back with the issues appended as a user message. If the critic model itself is unavailable (API error, invalid verdict) the report goes straight to a human (`critic_unavailable`), without a second investigator round. |
 | `finalize` | none | Verdict (forced to `needs_human_review` after the second rejection), severity from the deterministic rubric (family base, +1 for a high/critical asset or a success indicator, −1 for false positives), uncertainties (the model's own, plus tool errors, `unavailable`/`not_found` lookups and unresolved critic issues), the model-prediction summary and the investigation steps. |
 
 Severity never comes from the model: `secops.agent.rubric.severity_for` is a table, so two
-analysts reading the same evidence get the same severity.
+analysts reading the same evidence get the same severity. Its two inputs are also deterministic:
+the asset criticality comes from the `get_asset` evidence for the alert's destination, and the
+success indicator is a heuristic over the `get_related_events` aggregate anchored on the alert
+(at least 5 flows between the pair returning on average 10 KB or more to the source: a Heartbleed
+leak qualifies, a brute-force burst of banners and a single web response do not). The model may
+claim success in its draft; if the evidence does not show it, the claim becomes an uncertainty
+and severity is not raised. The model's free-text family is normalised to one of the seven
+Phase 1 families (`normalize_family`: "Heartbleed" → `rare_exploit`); text that matches nothing
+falls back to the detector's family with an uncertainty saying so.
 
 ## Evidence discipline
 
@@ -89,9 +97,9 @@ Chosen on 2026-10-04 from the chronological test split, all above the champion's
 | `ftp_bruteforce` | 1110604 | true_positive | high | brute_force | 0.95 | 5 | 0 | 4 + 1 | 25,977 | 51% | 2,607 | $0.122 | 34 s |
 | `internal_portscan` | 3083227 | true_positive | low | port_scan | 0.90 | 5 | 1 | 5 + 2 | 40,082 | 44% | 4,487 | $0.210 | 50 s |
 | `benign_high_score` | 357329 | needs_human_review | low | port_scan | 0.00 | 4 | 2 | 5 + 2 | 35,592 | 50% | 3,705 | $0.167 | 47 s |
-| `heartbleed` | 2251110 | needs_human_review | high | heartbleed (detector family: web_attack) | 0.00 | 7 | 2 | 5 + 2 | 46,766 | 38% | 5,047 | $0.249 | 56 s |
+| `heartbleed` | 2251110 | needs_human_review | critical | rare_exploit | 0.00 | 7 | 2 | 5 + 2 | 46,766 | 38% | 5,047 | $0.249 | 56 s |
 
-Total for the four recordings:$0.748. The first recording, before two
+Total for the four recordings: $0.748. The first recording, before two
 fixes described below, cost $0.767; everything else spent on the API during Phase 4 was free
 `count_tokens` validation. Wall-clock is end to end including tool execution against the full
 event store.
@@ -129,6 +137,17 @@ What the numbers say:
   so the decision is unaffected, but a compact per-flow line format is a cheap improvement for
   Phase 5.
 
+## Tracing (Phase 6)
+
+`secops.observability` defines a small `Tracer` protocol: `start` per investigation, one
+`llm_call` per model request (model, request id, tokens, cache reads, latency, cost), one
+`tool_call` per tool (name, evidence id, status, latency), `end` with the verdict and cost. The
+graph and the adapter call it through `SafeTracer`, so a tracing backend that is down is logged
+once and never changes a report. `get_tracer()` returns the Langfuse implementation when
+`LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set and the optional `tracing` dependency
+group is installed, and a silent tracer otherwise. The Langfuse path has not been exercised
+against a Langfuse instance in this repository (no keys were available): `TBD`.
+
 ## Persistence and CLI
 
 Migration `0002` adds `investigations` (verdict, severity, confidence, family, iterations,
@@ -149,8 +168,9 @@ uv run secops-agent recent
 
 - Two models, one provider, no fallback routing: a refusal or an API error ends the
   investigation as `needs_human_review` with the error recorded.
-- The critic model reads summaries, not raw payloads, so it can only catch claims that go
-  beyond the summary; the deterministic rules catch fabricated ids and references.
+- The critic model sees the same evidence blocks as the investigator (summary plus the
+  truncated data), so it cannot verify anything that was cut off at 4,000 characters; the
+  deterministic rules catch fabricated ids and references regardless.
 - Four recorded scenarios demonstrate behaviour; they are not an evaluation. Phase 5 builds the
   golden set, measures verdict accuracy, grounding rate, cost and latency across many alerts,
   compares against a rule-based baseline, and adds the regression gate.

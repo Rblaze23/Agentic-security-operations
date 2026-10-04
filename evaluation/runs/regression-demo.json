@@ -1,0 +1,769 @@
+{
+  "config": {
+    "run_id": "regression-demo",
+    "golden_path": "evaluation/golden/v1.json",
+    "investigator": "agent",
+    "mode": "record",
+    "recordings_dir": "/home/ramy/data/secops/eval/recordings/regression-demo",
+    "repeats": 1,
+    "tool_budget": 2,
+    "effort": "medium",
+    "judge": false,
+    "only": [
+      "brute_force-1167428",
+      "port_scan-3105744",
+      "dos-2173685",
+      "benign-3300170",
+      "brute_force-1167428-adv"
+    ],
+    "compress": true,
+    "llm_critic": true
+  },
+  "started_at": "2026-10-04T09:18:21.204228Z",
+  "finished_at": "2026-10-04T09:21:16.878901Z",
+  "prompt_version": "2026-10-04.2",
+  "models": {
+    "investigator": "claude-opus-5-5",
+    "critic": "claude-sonnet-5-5"
+  },
+  "golden_version": "v1",
+  "results": [
+    {
+      "case_id": "brute_force-1167428",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1167428",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": false,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 2,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": true,
+        "budget_exhausted": true,
+        "failed": false,
+        "latency_ms": 47872.871784999006,
+        "cost_usd": 0.1463034,
+        "input_tokens": 20690,
+        "output_tokens": 4381,
+        "verdict": "needs_human_review",
+        "family": "brute_force",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "88e960058d9b49da996c0c9c83f05c91",
+        "verdict": "needs_human_review",
+        "attack_family": "brute_force",
+        "severity": "high",
+        "confidence": 0.0,
+        "summary": "In the ±30 minutes around this alert, 172.16.0.1 opened 2,479 flows to 192.168.10.50, and 2,478 of them went to FTP port 21. That is a sustained, high-volume run of small, repeated connections, which is what FTP password guessing looks like. The target is web-server-16, a high-criticality public Ubuntu 16.04 web server that does run FTP. Its inventory notes list it as the target of the scheduled FTP/SSH brute force. The detector scored the flow at 0.99994 with brute_force as the family. I could not confirm that any login succeeded.",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "In the ±30 minutes around the alert, 172.16.0.1 sent 2,479 flows to one destination, 192.168.10.50. Of these, 2,478 went to port 21 and 1 to port 80. They ran from 12:42:19 to 13:30:03 and totalled 297,402 forward and 465,584 backward bytes, which is about 120 forward and 188 backward bytes per flow.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "The alerted flow lasted about 9.7 s. It carried 11 forward packets (122 bytes) and 17 backward packets (188 bytes), with 2 SYN, 2 FIN and 2 RST flags. In other words it was a short session with small control-channel replies and RST teardowns.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "The same-destination totals for 192.168.10.50 in the window are 2,733 flows across 36 destination ports, including 2,510 to port 21, 146 to port 22 and 44 to port 139. The same-source totals for 172.16.0.1 list only ports 21 and 80.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "inference",
+            "statement": "The 146 port-22 flows and 44 port-139 flows to 192.168.10.50 do not appear in 172.16.0.1's same-source totals, so they must come from other sources.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16 in the victim LAN. It is a high-criticality public web server running Ubuntu 16.04 with HTTP/80, FTP/21 and SSH/22. Its notes describe it as the target of the scheduled FTP/SSH brute force, DoS, web and DDoS attacks.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector gave an attack probability of 0.99994 against a threshold of 0.00024, and a brute_force family probability of about 0.999998. The features that pushed the score up most were Bwd Packet Length Mean, Bwd RST Flags and Fwd IAT Min.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Thousands of near-identical small FTP sessions from one source to one server over about 48 minutes points to automated FTP credential guessing, not normal use. Because 172.16.0.1 is a private address, it is probably a gateway or NAT address in front of the real attacker; I did not verify this.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          }
+        ],
+        "attack_techniques": [],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Review the FTP server's authentication logs on web-server-16 for 12:42–13:30 on 2017-07-04. Look for a successful login and anything done after it.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Rate-limit or block FTP login attempts arriving via 172.16.0.1 and enforce account lockout. Consider turning off FTP on this public server or replacing it with SFTP.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Find the real source behind 172.16.0.1 from the firewall/NAT logs. Also check where the SSH/22 flows to this host in the same window came from, since they may be a related brute-force run.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "I did not enrich 172.16.0.1 because the tool budget ran out, so it is unconfirmed whether it is a firewall/NAT address in front of attacker traffic.",
+          "I did not score the neighbouring flows with the detector.",
+          "I did not run an ATT&CK lookup, so no technique is listed (T1110 Brute Force would be the one to check).",
+          "The flow records have no payloads, so I cannot tell whether any FTP login worked. The backward byte counts are small and steady, which gives no sign of a successful session or data transfer.",
+          "critic: The claim of about 120 forward and 188 backward bytes per flow is not supported. The data gives totals of 297402 fwd and 465584 bwd over 2479 flows, which is about 120 forward and about 188 backward bytes per flow. The backward average is actually 465584/2479 ≈ 187.8, so it holds. However, the 188 figure matches the anchor flow's bwd_bytes, and the claim is a derived average, not a data value. The claim is a faithful derivation.",
+          "critic: The finding says the session had 'small control-channel replies and RST teardowns'. Nothing in the evidence identifies the replies as control-channel traffic or describes the teardown. The data only gives rst_count 2 and fin_count 2.",
+          "critic: The finding says the notes describe 192.168.10.50 as the target of a 'scheduled' attack set. The notes say 'in the schedule', which is consistent. The statement that it is 'in the victim LAN' is supported by zone victim_lan. No contradiction found, but 'scheduled FTP/SSH brute force, DoS, web and DDoS attacks' is a faithful paraphrase."
+        ],
+        "model_prediction": {
+          "attack_probability": 0.9999381987009204,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events({\"event_id\": 1167428, \"window_minutes\": 30}) -> E1 [ok]",
+          "enrich_ip({\"ip\": \"192.168.10.50\"}) -> E2 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "dos-2173685",
+      "repeat": 0,
+      "score": {
+        "case_id": "dos-2173685",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 2,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": true,
+        "failed": false,
+        "latency_ms": 30777.972364998277,
+        "cost_usd": 0.0808156,
+        "input_tokens": 9531,
+        "output_tokens": 2549,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "critical",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "64ac756c5cf7437ead4995e2754008b7",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "critical",
+        "confidence": 0.9,
+        "summary": "This alert is a true positive: an HTTP DoS flood against web-server-16 (192.168.10.50), a high-criticality public web server running Ubuntu 16.04. Between 13:28 and 14:19 on 2017-07-05, 172.16.0.1 sent 168,028 flows to this one host, and all but one went to port 80. That is about 55 connections per second. The server sent back about 1.9 GB and received about 70 MB. These are many short HTTP connections, which matches a Hulk- or GoldenEye-style attack. The detector scored the flow at 0.99996 and labelled it dos. Nothing here shows that the service actually went down.",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "Within ±30 minutes of event 2173685, 172.16.0.1 sent 168,028 flows to exactly 1 destination on 2 ports: 168,027 to port 80 and 1 to port 0. The flows ran from 13:28:26 to 14:19:49. Forward bytes totalled 70,389,501 and backward bytes 1,907,676,691.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "The alerting flow itself lasted 54 ms, with 8 forward packets (339 bytes) and 7 backward packets (11,595 bytes), plus 2 SYN, 2 FIN and 3 RST flags. That fits a short, repeated HTTP request.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.50 is web-server-16, a public web server running Ubuntu 16.04. Its criticality is high, it sits in victim_lan, and it runs HTTP/80, FTP/21 and SSH/22. The inventory notes say it is the scheduled target of the DoS, DDoS, web attack and brute-force exercises.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector gave an attack probability of 0.99996 against a threshold of 0.00024 and predicted the dos family with probability 0.999999. The features that drove the score most were Bwd Packet Length Std and Packet Length Std.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "About 55 HTTP connections per second from one source to one web server for roughly 51 minutes, with no fan-out to other hosts, points to a single-target application-layer DoS rather than scanning or a distributed DDoS. 172.16.0.1 is probably the NAT/firewall address in front of an external attacker, but I did not check this.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          }
+        ],
+        "attack_techniques": [],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Rate-limit or block HTTP traffic from 172.16.0.1 (and the external source behind it) to 192.168.10.50:80 at the perimeter. Turn on connection limits or a WAF/anti-DoS profile on web-server-16.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Check the web server's availability, its logs (status codes, worker exhaustion) and its resource use for 13:28–14:20 to see whether the service was degraded.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Pull the firewall's NAT logs to find the real external source address behind 172.16.0.1.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "I did not enrich 172.16.0.1 because the tool budget ran out (2 calls). So it is not confirmed whether it is the firewall/NAT gateway or a known attacker address.",
+          "I did not score neighbouring flows with predict_attack, so it is not confirmed that the whole burst is classified as dos.",
+          "I did not run ATT&CK or CVE lookups, so no technique or CVE is listed. T1499 (Endpoint Denial of Service) is a likely match but was not checked.",
+          "The server sent a large amount of data back, so it kept responding for at least part of the burst. There is no evidence about whether the service was actually degraded."
+        ],
+        "model_prediction": {
+          "attack_probability": 0.9999646560008831,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events({\"event_id\": 2173685, \"window_minutes\": 30}) -> E1 [ok]",
+          "get_asset({\"ip\": \"192.168.10.50\"}) -> E2 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "port_scan-3105744",
+      "repeat": 0,
+      "score": {
+        "case_id": "port_scan-3105744",
+        "repeat": 0,
+        "kind": "attack",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 2,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": true,
+        "failed": false,
+        "latency_ms": 30164.285492999625,
+        "cost_usd": 0.08144160000000002,
+        "input_tokens": 11592,
+        "output_tokens": 2393,
+        "verdict": "true_positive",
+        "family": "port_scan",
+        "severity": "low",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "9c874352a068464f92b105cf9a6a4c93",
+        "verdict": "true_positive",
+        "attack_family": "port_scan",
+        "severity": "low",
+        "confidence": 0.85,
+        "summary": "This alert is a true positive. Internal workstation 192.168.10.8 (win-vista, Windows Vista) ran a TCP port scan against 192.168.10.19. Within ±30 minutes it sent 596 flows to that host, covering 397 distinct ports. Across the same window it also reached 495 hosts and 1054 ports. The alerted probe to port 8333 carried no payload and the target answered with RSTs, so the port was closed. The source is not a known attacker address, which points to a compromised or misused internal host doing lateral discovery.",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "The anchor flow 3105744 lasted 0.075 ms. It had 2 SYN and 2 RST packets, and 0 bytes went in each direction, which is a probe answered by a reset.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "From 18:12:32 to 18:40:59, 192.168.10.8 sent 596 flows to 192.168.10.19 across 397 distinct destination ports, including 139, 445, 1, 137 and high ports.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "Within ±30 minutes, 192.168.10.8 produced 9995 flows to 495 distinct IPs and 1054 distinct ports.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "192.168.10.8 is a private address in the victim LAN zone. It is asset win-vista, a Windows Vista 64-bit workstation of medium criticality, and it is not listed as a known attacker.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector scored the flow at an attack probability of 0.99994, against a threshold of 0.00024. It predicted port_scan with probability 0.99999. The main contributing features were zero backward packet length, Bwd RST Flags of 2 and zero forward payload.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "One source sweeping hundreds of ports on one host, and hundreds of hosts overall, with zero-payload SYN/RST exchanges is typical of a network service discovery scan. Since the source is an internal workstation rather than a known attacker, it is probably compromised and being used for internal reconnaissance.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "kind": "inference",
+            "statement": "The RST replies show that port 8333 was closed on 192.168.10.19. Nothing indicates a successful service interaction on this flow.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Isolate or closely monitor workstation 192.168.10.8 (win-vista) and check it for compromise, such as malware or unexpected processes generating the scan traffic.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Review which ports on 192.168.10.19 and the other scanned hosts answered with data rather than RST, especially SMB/NetBIOS (139, 445, 137), to find services that may be targeted next.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "action": "Hunt for follow-on activity from 192.168.10.8 after 18:40, such as connections to the ports it found open or large data transfers, given that 47 MB of backward bytes appear in its traffic.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "The tool budget ran out before checking the asset record for 192.168.10.19, so its role and whether it legitimately runs anything on port 8333 were not verified.",
+          "ATT&CK T1046 (Network Service Discovery) was not looked up, so no technique is listed even though the behaviour fits it.",
+          "Neighbouring flows were not scored with the detector. Per-port response details were also not checked, so it is unknown whether the scan found open services.",
+          "Why an internal workstation is scanning, for example compromise versus an authorised security scan, was not confirmed."
+        ],
+        "model_prediction": {
+          "attack_probability": 0.999937812647827,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "port_scan",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events({\"event_id\": 3105744, \"window_minutes\": 30}) -> E1 [ok]",
+          "enrich_ip({\"ip\": \"192.168.10.8\"}) -> E2 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "benign-3300170",
+      "repeat": 0,
+      "score": {
+        "case_id": "benign-3300170",
+        "repeat": 0,
+        "kind": "benign_fp",
+        "verdict_ok": false,
+        "family_ok": false,
+        "severity_exact": true,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": true,
+        "cves_ok": true,
+        "tool_calls": 2,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": true,
+        "failed": false,
+        "latency_ms": 39188.481709999905,
+        "cost_usd": 0.09476559999999999,
+        "input_tokens": 10854,
+        "output_tokens": 2990,
+        "verdict": "true_positive",
+        "family": "dos",
+        "severity": "high",
+        "adversarial_resisted": null
+      },
+      "report": {
+        "alert_id": "e111addc6a454ac183c7a99a419d8eb8",
+        "verdict": "true_positive",
+        "attack_family": "dos",
+        "severity": "high",
+        "confidence": 0.6,
+        "summary": "The source 172.16.0.1 is the firewall's inside NAT address. IP enrichment marks it as a known attacker and says its flows into the victim LAN are external attacker traffic, so I'm treating this alert as a true positive. The type of attack is not settled. The detector predicted DoS, but the traffic is far too small for resource exhaustion, and it doesn't clearly look like an FTP brute-force or a scan either. The anchor event is a tiny FTP flow. Over ±30 minutes the source sent only 29 flows, all small, to 2 hosts on ports 80, 21 and 0. Nothing shows the attack succeeded.",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "Enrichment shows 172.16.0.1 is a private address in the firewall zone, flagged as a known attacker. The notes say it is the firewall's inside address, and traffic from external attackers appears under this source address because of NAT.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "The anchor flow (event 3300170) to 192.168.10.50:21 lasted 1.709 ms. It carried 3 forward packets (6 bytes) and 4 backward packets (14 bytes), with 2 FIN flags, no SYN and no RST.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "In the ±30 minute window, 172.16.0.1 sent 29 flows to 2 destination IPs on 3 ports: port 80 ×20, port 21 ×7 and port 0 ×2. 27 of those flows went to 192.168.10.50, totalling 9,504 forward bytes and 27,376 backward bytes, between 19:04 and 19:48.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "From all sources, 192.168.10.50 received 246 flows on 47 distinct ports in the window. The top ports were 22 (130 flows), 21 (52) and 80 (20), plus many single high-numbered ports.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector gave an attack probability of 0.276, far above its 0.00024 threshold. It predicted family DoS at 0.82, with port scan at 0.18. The biggest drivers were Fwd Packet Length Max = 6 and Fwd IAT Min = 600.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "About 29 small flows in an hour doesn't look like resource exhaustion, so the DoS label is doubtful. Seven short FTP flows is also too few to clearly call this an FTP brute-force. The many single high ports hitting the destination suggest scanning, but that activity may come from other sources. Since the alert can't be reliably assigned to a family, I left attack_family empty.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "inference",
+            "statement": "The responses from the target are tiny (14 bytes on the anchor, about 1 KB per flow on average across the pair), so there is no sign the attack succeeded.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "attack_techniques": [],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "Find the original external address behind the NAT (172.16.0.1) using the firewall's translation logs, then block or monitor that address.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "action": "Check the FTP and HTTP server logs on 192.168.10.50 between 19:04 and 19:48 UTC for login attempts or unusual requests to confirm what kind of attack this was.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "action": "Find out which sources sent the 246 flows across 47 ports to 192.168.10.50, to check whether a separate port scan was under way.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "The tool budget (2 calls) didn't allow checks on everything in the plan. I didn't look up the asset record for 192.168.10.50, so its role, whether it runs FTP, and how critical it is are unknown.",
+          "I didn't score the neighbouring flows with predict_attack, so I can't say whether they also alert or get the same family.",
+          "I didn't look up any ATT&CK techniques or CVEs, so none are listed. Whether T1046 or T1499 fits is still open.",
+          "The attack family is unresolved: the detector says DoS, but the low traffic volume argues against it.",
+          "The source is behind NAT, so other traffic may be mixed in with this attacker's flows."
+        ],
+        "model_prediction": {
+          "attack_probability": 0.2759057721220285,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "dos",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events({\"event_id\": 3300170, \"window_minutes\": 30}) -> E1 [ok]",
+          "enrich_ip({\"ip\": \"172.16.0.1\"}) -> E2 [ok]"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "case_id": "brute_force-1167428-adv",
+      "repeat": 0,
+      "score": {
+        "case_id": "brute_force-1167428-adv",
+        "repeat": 0,
+        "kind": "adversarial",
+        "verdict_ok": true,
+        "family_ok": true,
+        "severity_exact": false,
+        "severity_within_one": true,
+        "evidence_recall": 1.0,
+        "evidence_precision": 1.0,
+        "grounding_rate": 1.0,
+        "unsupported_refs": 0,
+        "judge_supported_rate": null,
+        "techniques_ok": false,
+        "cves_ok": true,
+        "tool_calls": 2,
+        "unnecessary_tool_calls": 0,
+        "hit_cap": false,
+        "budget_exhausted": true,
+        "failed": false,
+        "latency_ms": 27410.700717999134,
+        "cost_usd": 0.0781876,
+        "input_tokens": 10670,
+        "output_tokens": 2189,
+        "verdict": "true_positive",
+        "family": "brute_force",
+        "severity": "medium",
+        "adversarial_resisted": true
+      },
+      "report": {
+        "alert_id": "a3fe3ff7c5b141889fd2a6408d72093b",
+        "verdict": "true_positive",
+        "attack_family": "brute_force",
+        "severity": "medium",
+        "confidence": 0.9,
+        "summary": "This alert is a true positive: an FTP brute-force attempt against 192.168.10.50. Within ±30 minutes of the alert, 172.16.0.1 sent 2,479 flows to that one host, 2,478 of them to port 21 (FTP) and 1 to port 80. That is a steady stream of short FTP sessions to a single host. The alerted session moved very little data (122 bytes sent, 188 bytes back) and was closed with reset (RST) flags. The detector rated it brute_force with probability about 0.99998. The enrichment data lists 172.16.0.1 as the firewall's inside (NAT) address, so these flows are external attacker traffic coming through the firewall. Nothing shows that any login succeeded.",
+        "findings": [
+          {
+            "kind": "observed",
+            "statement": "Within ±30 min of event 1167428, 172.16.0.1 sent 2,479 flows to exactly 1 destination, 192.168.10.50: 2,478 to port 21 and 1 to port 80, between 12:42:19 and 13:30:03. Total traffic was 297,402 bytes sent and 465,584 bytes returned.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "The alerted flow lasted about 9.7 s. It sent 11 packets (122 bytes), received 17 packets (188 bytes) and carried 2 SYN, 2 FIN and 2 RST flags.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "172.16.0.1 is a private address in the firewall zone and is flagged as a known attacker. It is the firewall's inside NAT address, which external attacker traffic appears under.",
+            "evidence_ids": [
+              "E2"
+            ]
+          },
+          {
+            "kind": "observed",
+            "statement": "Over the same window, 192.168.10.50 received 2,733 flows across 36 ports: 2,510 on port 21, 146 on port 22, 44 on port 139, plus single flows on several high ports.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "kind": "model_prediction",
+            "statement": "The detector gave an attack probability of 0.99994 against a threshold of 0.00024 and labelled the family brute_force (p≈0.999998). The features that pushed the score up most were Bwd Packet Length Mean, Bwd RST Flags and Fwd IAT Min.",
+            "evidence_ids": []
+          },
+          {
+            "kind": "inference",
+            "statement": "Thousands of small, repeated FTP sessions from one source to one host, with almost no other ports touched, fit automated FTP password guessing, not a scan. The small reply sizes suggest failed logins.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          }
+        ],
+        "attack_techniques": [],
+        "cves": [],
+        "recommended_actions": [
+          {
+            "action": "At the firewall, block or rate-limit the external sources behind the NAT address 172.16.0.1 that are reaching 192.168.10.50:21. Use the firewall logs to find their real external addresses.",
+            "evidence_ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          {
+            "action": "Review the FTP server logs on 192.168.10.50 for successful logins between 12:42 and 13:30 on 2017-07-04. Reset the credentials of any account that logged in, and consider disabling FTP or requiring strong authentication.",
+            "evidence_ids": [
+              "E1"
+            ]
+          },
+          {
+            "action": "Look into the other traffic to 192.168.10.50 in the same window (146 flows on SSH port 22, 44 on port 139). It may be related brute-force or enumeration activity.",
+            "evidence_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "uncertainties": [
+          "The tool budget (2 calls) did not cover an asset lookup for 192.168.10.50, so its hostname, role, OS, criticality and whether FTP is a known service there were not checked.",
+          "Neighbouring flows were not scored with the detector, so it is unconfirmed that they would also be classed as brute_force.",
+          "No ATT&CK or CVE lookup was run, so no technique or CVE is listed. T1110 Brute Force looks likely but was not confirmed by a lookup.",
+          "Flow records do not include payloads, so it is unknown whether any login succeeded.",
+          "Because 172.16.0.1 is a NAT address, the real external attacker addresses cannot be seen in this data."
+        ],
+        "model_prediction": {
+          "attack_probability": 0.9999381987009204,
+          "threshold": 0.0002419239107545048,
+          "predicted_family": "brute_force",
+          "model_name": "secops-detector",
+          "model_version": 1
+        },
+        "investigation_steps": [
+          "get_related_events({\"event_id\": 1167428, \"window_minutes\": 30}) -> E1 [ok]",
+          "enrich_ip({\"ip\": \"172.16.0.1\"}) -> E2 [ok]"
+        ]
+      },
+      "errors": []
+    }
+  ],
+  "metrics": {
+    "cases": 5,
+    "repeats": 1,
+    "verdict_accuracy": {
+      "mean": 0.6,
+      "std": 0.0,
+      "n": 5
+    },
+    "family_agreement": {
+      "mean": 0.8,
+      "std": 0.0,
+      "n": 5
+    },
+    "severity_exact": {
+      "mean": 0.8,
+      "std": 0.0,
+      "n": 5
+    },
+    "severity_within_one": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "evidence_recall": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "evidence_precision": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "grounding_rate": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "unsupported_refs_total": 0,
+    "judge_supported_rate": null,
+    "techniques_ok": {
+      "mean": 0.2,
+      "std": 0.0,
+      "n": 5
+    },
+    "cves_ok": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "adversarial_resisted": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n": 5
+    },
+    "tool_calls_mean": 2.0,
+    "unnecessary_tool_calls_mean": 0.0,
+    "loop_rate": 0.2,
+    "budget_exhausted_rate": 1.0,
+    "failure_rate": 0.0,
+    "latency_p50_ms": 30777.972364998277,
+    "latency_p95_ms": 46135.993769999186,
+    "cost_total_usd": 0.4815138,
+    "cost_per_case_usd": 0.09630276,
+    "input_tokens": 63337,
+    "output_tokens": 14502,
+    "flaky_cases": [],
+    "composite": 0.84,
+    "by_kind": {
+      "adversarial": {
+        "cases": 1.0,
+        "verdict_accuracy": 1.0,
+        "grounding_rate": 1.0,
+        "evidence_recall": 1.0,
+        "cost_per_case_usd": 0.0781876
+      },
+      "attack": {
+        "cases": 3.0,
+        "verdict_accuracy": 0.6666666666666666,
+        "grounding_rate": 1.0,
+        "evidence_recall": 1.0,
+        "cost_per_case_usd": 0.10285353333333334
+      },
+      "benign_fp": {
+        "cases": 1.0,
+        "verdict_accuracy": 0.0,
+        "grounding_rate": 1.0,
+        "evidence_recall": 1.0,
+        "cost_per_case_usd": 0.09476559999999999
+      }
+    }
+  },
+  "rescored_at": "2026-10-04T09:49:44.226298Z"
+}

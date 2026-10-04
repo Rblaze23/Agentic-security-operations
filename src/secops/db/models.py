@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -137,3 +138,27 @@ class ToolCall(Base):
     investigation: Mapped[Investigation] = relationship(back_populates="tool_calls")
 
     __table_args__ = (Index("ix_tool_calls_investigation_id", "investigation_id"),)
+
+
+class ModelPrediction(Base):
+    """One detector prediction. Schema only (migration 0003): nothing writes to it yet; the
+    drift-monitoring future work is what would fill it."""
+
+    __tablename__ = "model_predictions"
+
+    prediction_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    alert_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attack_probability: Mapped[float] = mapped_column(Float, nullable=False)
+    threshold: Mapped[float] = mapped_column(Float, nullable=False)
+    is_alert: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    predicted_family: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    model_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_model_predictions_created_at", "created_at"),
+        Index("ix_model_predictions_event_id", "event_id"),
+    )
