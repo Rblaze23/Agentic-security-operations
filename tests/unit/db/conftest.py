@@ -3,17 +3,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import Engine
 
-from secops.data.build import build
-from secops.data.clean import AttemptedPolicy
 from secops.db.session import make_engine, upgrade_to_head
-
-
-@pytest.fixture(scope="session")
-def fixture_parquet(fixture_dir: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:
-    tmp = tmp_path_factory.mktemp("built")
-    return build(
-        fixture_dir, tmp / "processed", tmp / "reports", AttemptedPolicy.RELABEL_BENIGN, subdir=""
-    )
 
 
 @pytest.fixture
